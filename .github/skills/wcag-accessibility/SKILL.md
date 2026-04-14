@@ -174,6 +174,17 @@ When reviewing a component:
 
 ---
 
+## Web Design Standards
+
+When generating frontend code, adhere to these 2026 standards:
+1. Mobile-first development using min-width media queries.
+2. Breakpoints: 480px (Mobile-L), 768px (Tablet), 1024px (Laptop), 1280px (Desktop), 1536px (XL).
+3. Use `clamp()` for fluid typography and `max-width: 1440px` for main containers.
+4. Enforce minimum tap targets of 44px and minimum font size of 16px.
+5. Prioritize CSS Grid and Flexbox over float-based layouts.
+
+---
+
 ## Reference
 
 - [WCAG 2.2 Quick Reference](https://www.w3.org/WAI/WCAG22/quickref/?versions=2.2&levels=aa)
