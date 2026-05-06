@@ -1,0 +1,1224 @@
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LeftRail } from '../components/LeftRail';
+import {
+  PlusIcon,
+  SearchIcon,
+  PackageIcon,
+  DownloadIcon,
+  FileArchiveIcon,
+  RefreshCwIcon,
+  SendIcon,
+  XIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+  FolderIcon,
+  BookmarkIcon,
+  ListIcon,
+  HashIcon,
+  GripVerticalIcon,
+  CheckIcon,
+  ArrowLeftIcon,
+  AlertCircleIcon,
+  ClockIcon,
+  UserIcon,
+  FileTextIcon,
+  EyeIcon,
+  TrashIcon } from
+'lucide-react';
+
+// ---------- Types ----------
+type PackageStatus = 'Draft' | 'In Review' | 'Approved' | 'Issued' | 'Out of Date';
+type ChangeState = 'Up to date' | 'Changes detected' | 'New';
+
+interface PackageDoc {
+  number: string;
+  title: string;
+  revision: string;
+  status: string;
+  sourceFolder: string;
+  render: boolean;
+  include: boolean;
+  section?: string;
+}
+
+interface PackageVersion {
+  version: string;
+  generatedDate: string;
+  generatedBy: string;
+  summary: string;
+}
+
+interface PackageObject {
+  reference: string;
+  title: string;
+  description: string;
+  status: PackageStatus;
+  revision: string;
+  owner: string;
+  lastUpdated: string;
+  documentCount: number;
+  changeState: ChangeState;
+  type: string;
+  discipline: string;
+  area: string;
+  dueDate: string;
+  lastGenerated: string;
+  documents: PackageDoc[];
+  versions: PackageVersion[];
+  changeLog: { type: string; doc: string; detail: string }[];
+}
+
+// ---------- Sample data ----------
+const samplePackages: PackageObject[] = [
+{
+  reference: 'WP-MECH-AREA-01',
+  title: 'Mechanical Area 01 — IFC Bundle',
+  description: 'Issued for construction bundle covering Area 01 mechanical scope.',
+  status: 'Issued',
+  revision: 'C02',
+  owner: 'Sarah Chen',
+  lastUpdated: '2026-04-28',
+  documentCount: 42,
+  changeState: 'Changes detected',
+  type: 'IFC Bundle',
+  discipline: 'Mechanical',
+  area: 'Area 01',
+  dueDate: '2026-05-12',
+  lastGenerated: '2026-04-28 14:21',
+  documents: [
+  { number: 'M-3012-GA-006', title: 'General Arrangement — Pump Skid 06', revision: 'B', status: 'Approved', sourceFolder: '/Mechanical/Area 01/GA', render: true, include: true, section: 'General Arrangements' },
+  { number: 'P-1001-PID-001', title: 'P&ID — Cooling Water Loop', revision: 'C', status: 'Approved', sourceFolder: '/Process/PIDs', render: true, include: true, section: 'P&IDs' },
+  { number: 'P-1001-PID-002', title: 'P&ID — Steam Distribution', revision: 'B', status: 'Approved', sourceFolder: '/Process/PIDs', render: true, include: true, section: 'P&IDs' },
+  { number: 'M-3012-ISO-018', title: 'Isometric — Line 3012-CW-04', revision: 'A', status: 'In Review', sourceFolder: '/Mechanical/Area 01/Isos', render: true, include: true, section: 'Isometrics' },
+  { number: 'C-4401-LAY-002', title: 'Civil Layout — Foundations', revision: 'B', status: 'Approved', sourceFolder: '/Civil/Layouts', render: false, include: true, section: 'Civil' }],
+
+  versions: [
+  { version: 'C02', generatedDate: '2026-04-28', generatedBy: 'Sarah Chen', summary: '3 revisions updated, 1 document added' },
+  { version: 'C01', generatedDate: '2026-03-14', generatedBy: 'Sarah Chen', summary: 'Initial IFC issue' },
+  { version: 'B01', generatedDate: '2026-02-02', generatedBy: 'Mark Doyle', summary: 'IFR bundle for internal review' }],
+
+  changeLog: [
+  { type: 'Revision changed', doc: 'P-1001-PID-001', detail: 'Rev B → Rev C' },
+  { type: 'Document added', doc: 'M-3012-ISO-018', detail: 'Added from /Mechanical/Area 01/Isos' },
+  { type: 'Metadata changed', doc: 'C-4401-LAY-002', detail: 'Status changed to Approved' }]
+
+},
+{
+  reference: 'WP-ELEC-SUBSTATION-A',
+  title: 'Substation A — Electrical Issue Pack',
+  description: 'Substation A single-line and protection drawings.',
+  status: 'In Review',
+  revision: 'B03',
+  owner: 'Daniel Park',
+  lastUpdated: '2026-04-30',
+  documentCount: 18,
+  changeState: 'Up to date',
+  type: 'Issue Pack',
+  discipline: 'Electrical',
+  area: 'Substation A',
+  dueDate: '2026-05-20',
+  lastGenerated: '2026-04-30 09:05',
+  documents: [
+  { number: 'E-2004-SLD-014', title: 'Single Line Diagram — 11kV', revision: 'C', status: 'Approved', sourceFolder: '/Electrical/SLDs', render: true, include: true, section: 'SLDs' },
+  { number: 'E-2004-SLD-015', title: 'Single Line Diagram — 415V', revision: 'B', status: 'In Review', sourceFolder: '/Electrical/SLDs', render: true, include: true, section: 'SLDs' },
+  { number: 'E-2004-PRT-008', title: 'Protection Schematic — Feeder 03', revision: 'A', status: 'Draft', sourceFolder: '/Electrical/Protection', render: true, include: true, section: 'Protection' }],
+
+  versions: [
+  { version: 'B03', generatedDate: '2026-04-30', generatedBy: 'Daniel Park', summary: 'Added protection schematics' },
+  { version: 'B02', generatedDate: '2026-04-12', generatedBy: 'Daniel Park', summary: 'Updated SLD revisions' }],
+
+  changeLog: []
+},
+{
+  reference: 'WP-PROC-IFC-BUNDLE-03',
+  title: 'Process IFC Bundle 03',
+  description: 'Process discipline IFC bundle for Phase 3 turnover.',
+  status: 'Draft',
+  revision: 'A01',
+  owner: 'Priya Natarajan',
+  lastUpdated: '2026-05-02',
+  documentCount: 67,
+  changeState: 'New',
+  type: 'IFC Bundle',
+  discipline: 'Process',
+  area: 'Phase 3',
+  dueDate: '2026-06-01',
+  lastGenerated: '—',
+  documents: [],
+  versions: [],
+  changeLog: []
+},
+{
+  reference: 'WP-CIV-FOUND-PKG',
+  title: 'Civil Foundations Submission',
+  description: 'Foundation drawings for client approval.',
+  status: 'Approved',
+  revision: 'C01',
+  owner: 'Marco Rossi',
+  lastUpdated: '2026-04-19',
+  documentCount: 24,
+  changeState: 'Up to date',
+  type: 'Submission',
+  discipline: 'Civil',
+  area: 'Site-wide',
+  dueDate: '2026-04-25',
+  lastGenerated: '2026-04-19 16:40',
+  documents: [],
+  versions: [],
+  changeLog: []
+},
+{
+  reference: 'WP-INST-LOOP-CHK',
+  title: 'Instrumentation Loop Check Pack',
+  description: 'Loop check documentation for commissioning.',
+  status: 'Out of Date',
+  revision: 'B01',
+  owner: 'Aisha Khan',
+  lastUpdated: '2026-03-22',
+  documentCount: 31,
+  changeState: 'Changes detected',
+  type: 'Commissioning',
+  discipline: 'Instrumentation',
+  area: 'Area 02',
+  dueDate: '2026-05-30',
+  lastGenerated: '2026-03-22 11:00',
+  documents: [],
+  versions: [],
+  changeLog: []
+}];
+
+
+const statusStyles: Record<PackageStatus, string> = {
+  'Draft': 'bg-neutral-100 text-neutral-700 border-neutral-200',
+  'In Review': 'bg-amber-50 text-amber-800 border-amber-200',
+  'Approved': 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  'Issued': 'bg-blue-50 text-blue-800 border-blue-200',
+  'Out of Date': 'bg-rose-50 text-rose-800 border-rose-200'
+};
+
+const changeStateStyles: Record<ChangeState, string> = {
+  'Up to date': 'text-emerald-700',
+  'Changes detected': 'text-amber-700',
+  'New': 'text-neutral-500'
+};
+
+// ---------- Page ----------
+type View = 'library' | 'wizard' | 'detail';
+
+export function Packages() {
+  const [activeRailItem, setActiveRailItem] = useState('packages');
+  const [view, setView] = useState<View>('library');
+  const [packages, setPackages] = useState<PackageObject[]>(samplePackages);
+  const [selectedRef, setSelectedRef] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2200);
+  };
+
+  const selectedPackage = useMemo(
+    () => packages.find((p) => p.reference === selectedRef) ?? null,
+    [packages, selectedRef]
+  );
+
+  const openDetail = (ref: string) => {
+    setSelectedRef(ref);
+    setView('detail');
+  };
+
+  const handleRepackage = (ref: string) => {
+    setPackages((prev) =>
+    prev.map((p) => {
+      if (p.reference !== ref) return p;
+      const nextRev = bumpRevision(p.revision);
+      const newVersion: PackageVersion = {
+        version: nextRev,
+        generatedDate: new Date().toISOString().slice(0, 10),
+        generatedBy: 'You',
+        summary: 'Repackaged — change log refreshed'
+      };
+      return {
+        ...p,
+        revision: nextRev,
+        status: 'Issued',
+        changeState: 'Up to date',
+        lastGenerated: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        lastUpdated: new Date().toISOString().slice(0, 10),
+        versions: [newVersion, ...p.versions]
+      };
+    })
+    );
+    showToast('Repackaged — new version created');
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-24px)] mt-6 bg-neutral-50">
+      <LeftRail
+        activeItem={activeRailItem}
+        onItemClick={setActiveRailItem}
+        onChatClick={() => {}} />
+
+
+      {/* Top bar */}
+      <header className="ml-14 h-14 bg-white border-b border-neutral-200 flex items-center px-6 gap-4 sticky top-6 z-10">
+        <div className="flex items-center gap-2 text-sm text-neutral-500">
+          <span>The Shard, London</span>
+          <ChevronRightIcon size={14} />
+          <span className="text-neutral-900 font-medium">Packages</span>
+        </div>
+        <div className="flex-1 max-w-xl ml-6 relative">
+          <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <input
+            placeholder="Search packages, documents, references…"
+            className="w-full h-9 pl-9 pr-3 rounded-md border border-neutral-200 bg-neutral-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:bg-white" />
+
+        </div>
+        <div className="ml-auto flex items-center gap-3 text-sm text-neutral-500">
+          <span>Project: Phase 3</span>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0461BA] to-[#035299] flex items-center justify-center text-white">
+            <UserIcon size={14} />
+          </div>
+        </div>
+      </header>
+
+      <main className="ml-14 p-6">
+        {view === 'library' &&
+        <PackageLibrary
+          packages={packages}
+          onOpen={openDetail}
+          onNew={() => setView('wizard')}
+          onRepackage={handleRepackage}
+          onAction={showToast} />
+
+        }
+        {view === 'wizard' &&
+        <CreatePackageWizard
+          onCancel={() => setView('library')}
+          onCreate={(pkg) => {
+            setPackages((prev) => [pkg, ...prev]);
+            setSelectedRef(pkg.reference);
+            setView('detail');
+            showToast('Package generated');
+          }} />
+
+        }
+        {view === 'detail' && selectedPackage &&
+        <PackageDetail
+          pkg={selectedPackage}
+          onBack={() => setView('library')}
+          onRepackage={() => handleRepackage(selectedPackage.reference)}
+          onAction={showToast} />
+
+        }
+      </main>
+
+      {toast &&
+      <div className="fixed bottom-6 right-6 bg-neutral-900 text-white text-sm px-4 py-2.5 rounded-md shadow-lg flex items-center gap-2 z-50">
+          <CheckIcon size={16} />
+          {toast}
+        </div>
+      }
+    </div>);
+
+}
+
+function bumpRevision(rev: string) {
+  const m = rev.match(/^([A-Z])(\d+)$/);
+  if (!m) return rev;
+  const n = (parseInt(m[2], 10) + 1).toString().padStart(2, '0');
+  return `${m[1]}${n}`;
+}
+
+// ---------- Library ----------
+function PackageLibrary({
+  packages,
+  onOpen,
+  onNew,
+  onRepackage,
+  onAction
+
+
+
+}: {packages: PackageObject[];onOpen: (ref: string) => void;onNew: () => void;onRepackage: (ref: string) => void;onAction: (msg: string) => void;}) {
+  const [filter, setFilter] = useState<'All' | PackageStatus>('All');
+  const filtered = filter === 'All' ? packages : packages.filter((p) => p.status === filter);
+
+  return (
+    <div>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-neutral-900">Packages</h1>
+          <p className="text-sm text-neutral-500 mt-1">
+            Controlled deliverable sets. Independent of folder structure — gather documents from anywhere in the project.
+          </p>
+        </div>
+        <button
+          onClick={onNew}
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-[#0461BA] text-white text-sm font-medium hover:bg-[#035299] transition-colors">
+
+          <PlusIcon size={16} />
+          New Package
+        </button>
+      </div>
+
+      {/* Filter chips */}
+      <div className="flex items-center gap-2 mb-4">
+        {(['All', 'Draft', 'In Review', 'Approved', 'Issued', 'Out of Date'] as const).map((s) =>
+        <button
+          key={s}
+          onClick={() => setFilter(s)}
+          className={`h-7 px-3 text-xs rounded-full border transition-colors ${
+          filter === s ?
+          'bg-[#0461BA] text-white border-[#0461BA]' :
+          'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'}`
+          }>
+
+            {s}
+          </button>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600">
+            <tr>
+              <th className="text-left px-4 py-2.5 font-medium">Reference</th>
+              <th className="text-left px-4 py-2.5 font-medium">Title</th>
+              <th className="text-left px-4 py-2.5 font-medium">Status</th>
+              <th className="text-left px-4 py-2.5 font-medium">Rev</th>
+              <th className="text-left px-4 py-2.5 font-medium">Owner</th>
+              <th className="text-left px-4 py-2.5 font-medium">Last updated</th>
+              <th className="text-right px-4 py-2.5 font-medium">Docs</th>
+              <th className="text-left px-4 py-2.5 font-medium">Change state</th>
+              <th className="text-right px-4 py-2.5 font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((p) =>
+            <tr key={p.reference} className="border-b border-neutral-100 hover:bg-neutral-50/60">
+                <td className="px-4 py-3">
+                  <button
+                  onClick={() => onOpen(p.reference)}
+                  className="font-mono text-xs text-[#0461BA] hover:underline">
+
+                    {p.reference}
+                  </button>
+                </td>
+                <td className="px-4 py-3 text-neutral-900">{p.title}</td>
+                <td className="px-4 py-3">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${statusStyles[p.status]}`}>
+                    {p.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 font-mono text-xs text-neutral-700">{p.revision}</td>
+                <td className="px-4 py-3 text-neutral-700">{p.owner}</td>
+                <td className="px-4 py-3 text-neutral-500">{p.lastUpdated}</td>
+                <td className="px-4 py-3 text-right text-neutral-700">{p.documentCount}</td>
+                <td className="px-4 py-3">
+                  <span className={`text-xs ${changeStateStyles[p.changeState]}`}>
+                    {p.changeState !== 'Up to date' && <AlertCircleIcon size={12} className="inline mr-1 -mt-0.5" />}
+                    {p.changeState}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <IconBtn title="Open" onClick={() => onOpen(p.reference)}><EyeIcon size={14} /></IconBtn>
+                    <IconBtn title="Repackage" onClick={() => onRepackage(p.reference)}><RefreshCwIcon size={14} /></IconBtn>
+                    <IconBtn title="Issue / Transmit" onClick={() => onAction('Transmittal started')}><SendIcon size={14} /></IconBtn>
+                    <IconBtn title="Download PDF" onClick={() => onAction('Downloading PDF…')}><DownloadIcon size={14} /></IconBtn>
+                    <IconBtn title="Download ZIP" onClick={() => onAction('Downloading ZIP…')}><FileArchiveIcon size={14} /></IconBtn>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        {filtered.length === 0 &&
+        <div className="p-10 text-center text-neutral-500 text-sm">No packages match this filter.</div>
+        }
+      </div>
+
+      {/* Concept callout */}
+      <div className="mt-8 p-4 bg-[#E8F1FB] border border-[#BAD4EE] rounded-lg text-sm text-[#0B3A6F] flex gap-3">
+        <PackageIcon size={18} className="flex-shrink-0 mt-0.5" />
+        <div>
+          <strong>Packages are independent of folders.</strong> A Package Object is a flexible collection
+          of documents pulled from anywhere in the project — folders, search results, saved views, or a
+          document register. Folders organise <em>source</em> documents; Packages organise <em>deliverables</em>.
+        </div>
+      </div>
+    </div>);
+
+}
+
+function IconBtn({ children, title, onClick }: {children: React.ReactNode;title: string;onClick: () => void;}) {
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      className="w-7 h-7 inline-flex items-center justify-center text-neutral-500 hover:text-[#0461BA] hover:bg-[#E8F1FB] rounded">
+
+      {children}
+    </button>);
+
+}
+
+// ---------- Wizard ----------
+function CreatePackageWizard({
+  onCancel,
+  onCreate
+
+
+
+}: {onCancel: () => void;onCreate: (pkg: PackageObject) => void;}) {
+  const [step, setStep] = useState(1);
+  const [details, setDetails] = useState({
+    reference: 'WP-MECH-AREA-02',
+    title: 'Mechanical Area 02 — IFR Bundle',
+    description: 'Issued for review bundle covering Area 02 mechanical scope.',
+    type: 'IFR Bundle',
+    discipline: 'Mechanical',
+    area: 'Area 02',
+    owner: 'You',
+    dueDate: '2026-06-15'
+  });
+  const [docs, setDocs] = useState<PackageDoc[]>([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [includeAttachments, setIncludeAttachments] = useState(true);
+  const [includeLinked, setIncludeLinked] = useState(true);
+  const [renderAll, setRenderAll] = useState(true);
+
+  const next = () => setStep((s) => Math.min(4, s + 1));
+  const prev = () => setStep((s) => Math.max(1, s - 1));
+
+  const generate = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const pkg: PackageObject = {
+      ...details,
+      status: 'Draft',
+      revision: 'A01',
+      lastUpdated: today,
+      documentCount: docs.length,
+      changeState: 'New',
+      lastGenerated: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      documents: docs.map((d) => ({ ...d, render: renderAll ? d.render : false })),
+      versions: [{ version: 'A01', generatedDate: today, generatedBy: 'You', summary: 'Initial generation' }],
+      changeLog: []
+    };
+    onCreate(pkg);
+  };
+
+  return (
+    <div>
+      <button
+        onClick={onCancel}
+        className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 mb-3">
+
+        <ArrowLeftIcon size={14} /> Back to Packages
+      </button>
+      <h1 className="text-2xl font-semibold text-neutral-900 mb-1">Create new package</h1>
+      <p className="text-sm text-neutral-500 mb-6">Build a flexible package that draws documents from anywhere in the project.</p>
+
+      {/* Stepper */}
+      <Stepper step={step} steps={['Details', 'Add documents', 'Organise', 'Review & generate']} />
+
+      <div className="bg-white border border-neutral-200 rounded-lg p-6 mt-6">
+        {step === 1 &&
+        <div className="grid grid-cols-2 gap-4 max-w-3xl">
+            <Field label="Package reference"><input value={details.reference} onChange={(e) => setDetails({ ...details, reference: e.target.value })} className={inputCls} /></Field>
+            <Field label="Title"><input value={details.title} onChange={(e) => setDetails({ ...details, title: e.target.value })} className={inputCls} /></Field>
+            <Field label="Description" full><textarea value={details.description} onChange={(e) => setDetails({ ...details, description: e.target.value })} rows={3} className={inputCls} /></Field>
+            <Field label="Package type">
+              <select value={details.type} onChange={(e) => setDetails({ ...details, type: e.target.value })} className={inputCls}>
+                <option>IFC Bundle</option><option>IFR Bundle</option><option>Submission</option><option>Commissioning</option><option>Issue Pack</option>
+              </select>
+            </Field>
+            <Field label="Discipline">
+              <select value={details.discipline} onChange={(e) => setDetails({ ...details, discipline: e.target.value })} className={inputCls}>
+                <option>Mechanical</option><option>Electrical</option><option>Process</option><option>Civil</option><option>Instrumentation</option>
+              </select>
+            </Field>
+            <Field label="Project area"><input value={details.area} onChange={(e) => setDetails({ ...details, area: e.target.value })} className={inputCls} /></Field>
+            <Field label="Owner"><input value={details.owner} onChange={(e) => setDetails({ ...details, owner: e.target.value })} className={inputCls} /></Field>
+            <Field label="Due date"><input type="date" value={details.dueDate} onChange={(e) => setDetails({ ...details, dueDate: e.target.value })} className={inputCls} /></Field>
+          </div>
+        }
+
+        {step === 2 &&
+        <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-neutral-900">Add documents</h3>
+                <p className="text-xs text-neutral-500 mt-0.5">Add documents from any source. They don't need to live in the same folder.</p>
+              </div>
+              <button onClick={() => setShowAdd(true)} className="h-8 px-3 rounded-md bg-[#0461BA] text-white text-sm hover:bg-[#035299] inline-flex items-center gap-1.5">
+                <PlusIcon size={14} /> Add documents
+              </button>
+            </div>
+
+            {docs.length === 0 ?
+          <div className="border-2 border-dashed border-neutral-200 rounded-md p-10 text-center">
+                <PackageIcon size={32} className="mx-auto text-neutral-300 mb-2" />
+                <p className="text-sm text-neutral-600 mb-4">No documents yet. Pick from anywhere in the project.</p>
+                <button onClick={() => setShowAdd(true)} className="h-8 px-3 rounded-md border border-neutral-200 text-sm hover:bg-neutral-50">
+                  Add documents
+                </button>
+              </div> :
+
+          <div className="border border-neutral-200 rounded-md">
+                <table className="w-full text-sm">
+                  <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600">
+                    <tr>
+                      <th className="text-left px-3 py-2 font-medium">Document #</th>
+                      <th className="text-left px-3 py-2 font-medium">Title</th>
+                      <th className="text-left px-3 py-2 font-medium">Rev</th>
+                      <th className="text-left px-3 py-2 font-medium">Source folder</th>
+                      <th className="px-3 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {docs.map((d, i) =>
+                <tr key={i} className="border-b border-neutral-100 last:border-0">
+                        <td className="px-3 py-2 font-mono text-xs">{d.number}</td>
+                        <td className="px-3 py-2">{d.title}</td>
+                        <td className="px-3 py-2 font-mono text-xs">{d.revision}</td>
+                        <td className="px-3 py-2 text-neutral-500 text-xs">{d.sourceFolder}</td>
+                        <td className="px-3 py-2 text-right">
+                          <button onClick={() => setDocs(docs.filter((_, j) => j !== i))} className="text-neutral-400 hover:text-rose-600">
+                            <TrashIcon size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                )}
+                  </tbody>
+                </table>
+              </div>
+          }
+
+            {showAdd &&
+          <AddDocumentsModal
+            onClose={() => setShowAdd(false)}
+            onAdd={(newDocs) => {
+              setDocs((prev) => [...prev, ...newDocs]);
+              setShowAdd(false);
+            }} />
+
+          }
+          </div>
+        }
+
+        {step === 3 &&
+        <div>
+            <h3 className="text-sm font-semibold text-neutral-900 mb-3">Organise contents</h3>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="col-span-2">
+                <div className="border border-neutral-200 rounded-md">
+                  {docs.length === 0 &&
+                <div className="p-6 text-center text-sm text-neutral-500">No documents to organise.</div>
+                }
+                  {docs.map((d, i) =>
+                <div key={i} className="flex items-center gap-2 px-3 py-2 border-b border-neutral-100 last:border-0 hover:bg-neutral-50">
+                      <GripVerticalIcon size={14} className="text-neutral-400 cursor-grab" />
+                      <span className="text-xs text-neutral-400 w-6">{i + 1}</span>
+                      <span className="font-mono text-xs flex-1">{d.number}</span>
+                      <span className="text-sm text-neutral-700 flex-[2] truncate">{d.title}</span>
+                      <button
+                    onClick={() => setDocs(docs.map((x, j) => j === i ? { ...x, render: !x.render } : x))}
+                    className={`text-xs px-2 py-0.5 rounded border ${d.render ? 'bg-[#E8F1FB] border-[#BAD4EE] text-[#0461BA]' : 'bg-white border-neutral-200 text-neutral-500'}`}>
+
+                        {d.render ? 'Render' : 'Link only'}
+                      </button>
+                      <button
+                    onClick={() => setDocs(docs.map((x, j) => j === i ? { ...x, include: !x.include } : x))}
+                    className={`text-xs px-2 py-0.5 rounded border ${d.include ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-neutral-50 border-neutral-200 text-neutral-400'}`}>
+
+                        {d.include ? 'Include' : 'Excluded'}
+                      </button>
+                      <div className="flex flex-col -space-y-px">
+                        <button
+                      onClick={() => i > 0 && setDocs(swap(docs, i, i - 1))}
+                      className="text-neutral-400 hover:text-neutral-700 text-[10px]">▲</button>
+                        <button
+                      onClick={() => i < docs.length - 1 && setDocs(swap(docs, i, i + 1))}
+                      className="text-neutral-400 hover:text-neutral-700 text-[10px]">▼</button>
+                      </div>
+                    </div>
+                )}
+                </div>
+                <button className="mt-3 text-sm text-[#0461BA] hover:underline inline-flex items-center gap-1">
+                  <PlusIcon size={14} /> Add section / separator page
+                </button>
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold uppercase text-neutral-500 tracking-wide">Options</h4>
+                <Toggle label="Include attachments" checked={includeAttachments} onChange={setIncludeAttachments} />
+                <Toggle label="Include linked documents" checked={includeLinked} onChange={setIncludeLinked} />
+                <Toggle label="Render all documents to PDF" checked={renderAll} onChange={setRenderAll} />
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  Excluded documents stay attached as static links to the source document but are not rendered into the package PDF.
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        {step === 4 &&
+        <div>
+            <h3 className="text-sm font-semibold text-neutral-900 mb-4">Review & generate</h3>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <SummaryRow k="Reference" v={details.reference} />
+                <SummaryRow k="Title" v={details.title} />
+                <SummaryRow k="Type" v={details.type} />
+                <SummaryRow k="Discipline" v={details.discipline} />
+                <SummaryRow k="Area" v={details.area} />
+                <SummaryRow k="Owner" v={details.owner} />
+                <SummaryRow k="Due date" v={details.dueDate} />
+              </div>
+              <div className="space-y-3">
+                <SummaryRow k="Documents" v={`${docs.length} included`} />
+                <SummaryRow k="Render" v={renderAll ? 'All documents to PDF' : 'Selected only'} />
+                <SummaryRow k="Attachments" v={includeAttachments ? 'Included' : 'Excluded'} />
+                <SummaryRow k="Linked documents" v={includeLinked ? 'Included' : 'Excluded'} />
+                <SummaryRow k="Output" v="PDF + ZIP" />
+              </div>
+            </div>
+            <div className="mt-6 p-4 bg-neutral-50 rounded-md border border-neutral-200 text-sm text-neutral-600">
+              On generate, the coversheet is created immediately. Document rendering runs asynchronously and the package
+              becomes available in the Packages library. The package is <strong>not stored in any folder</strong> — it lives in the Packages library.
+            </div>
+          </div>
+        }
+
+        {/* Footer nav */}
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-neutral-200">
+          <button onClick={onCancel} className="text-sm text-neutral-500 hover:text-neutral-900">Cancel</button>
+          <div className="flex items-center gap-2">
+            {step > 1 &&
+            <button onClick={prev} className="h-9 px-4 rounded-md border border-neutral-200 text-sm hover:bg-neutral-50 inline-flex items-center gap-1.5">
+                <ChevronLeftIcon size={14} /> Back
+              </button>
+            }
+            {step < 4 &&
+            <button onClick={next} className="h-9 px-4 rounded-md bg-[#0461BA] text-white text-sm hover:bg-[#035299] inline-flex items-center gap-1.5">
+                Next <ChevronRightIcon size={14} />
+              </button>
+            }
+            {step === 4 &&
+            <button onClick={generate} className="h-9 px-4 rounded-md bg-[#0461BA] text-white text-sm hover:bg-[#035299] inline-flex items-center gap-1.5">
+                <PackageIcon size={14} /> Generate package
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>);
+
+}
+
+function swap<T>(arr: T[], i: number, j: number): T[] {
+  const n = [...arr];
+  [n[i], n[j]] = [n[j], n[i]];
+  return n;
+}
+
+const inputCls = 'w-full h-9 px-3 rounded-md border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0461BA]';
+
+function Field({ label, children, full }: {label: string;children: React.ReactNode;full?: boolean;}) {
+  return (
+    <div className={full ? 'col-span-2' : ''}>
+      <label className="block text-xs font-medium text-neutral-600 mb-1.5">{label}</label>
+      {children}
+    </div>);
+
+}
+
+function Toggle({ label, checked, onChange }: {label: string;checked: boolean;onChange: (v: boolean) => void;}) {
+  return (
+    <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`w-9 h-5 rounded-full transition-colors relative ${checked ? 'bg-[#0461BA]' : 'bg-neutral-300'}`}>
+
+        <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${checked ? 'translate-x-4' : ''}`} />
+      </button>
+      {label}
+    </label>);
+
+}
+
+function SummaryRow({ k, v }: {k: string;v: string;}) {
+  return (
+    <div className="flex text-sm">
+      <span className="w-40 text-neutral-500">{k}</span>
+      <span className="text-neutral-900 font-medium">{v}</span>
+    </div>);
+
+}
+
+function Stepper({ step, steps }: {step: number;steps: string[];}) {
+  return (
+    <div className="flex items-center gap-2">
+      {steps.map((s, i) => {
+        const n = i + 1;
+        const active = n === step;
+        const done = n < step;
+        return (
+          <React.Fragment key={s}>
+            <div className="flex items-center gap-2">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
+              done ? 'bg-emerald-500 text-white' : active ? 'bg-[#0461BA] text-white' : 'bg-neutral-200 text-neutral-500'}`
+              }>
+                {done ? <CheckIcon size={12} /> : n}
+              </div>
+              <span className={`text-sm ${active ? 'text-neutral-900 font-medium' : 'text-neutral-500'}`}>{s}</span>
+            </div>
+            {i < steps.length - 1 && <div className="flex-1 h-px bg-neutral-200 max-w-[60px]" />}
+          </React.Fragment>);
+
+      })}
+    </div>);
+
+}
+
+// ---------- Add Documents Modal ----------
+function AddDocumentsModal({ onClose, onAdd }: {onClose: () => void;onAdd: (docs: PackageDoc[]) => void;}) {
+  const [tab, setTab] = useState<'folder' | 'search' | 'view' | 'register' | 'manual'>('folder');
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [manualNumbers, setManualNumbers] = useState('');
+
+  const sources: PackageDoc[] = [
+  { number: 'M-3012-GA-006', title: 'General Arrangement — Pump Skid 06', revision: 'B', status: 'Approved', sourceFolder: '/Mechanical/Area 02/GA', render: true, include: true },
+  { number: 'M-3012-GA-007', title: 'General Arrangement — Pump Skid 07', revision: 'A', status: 'In Review', sourceFolder: '/Mechanical/Area 02/GA', render: true, include: true },
+  { number: 'P-1001-PID-014', title: 'P&ID — Lube Oil System', revision: 'B', status: 'Approved', sourceFolder: '/Process/PIDs', render: true, include: true },
+  { number: 'E-2004-SLD-022', title: 'SLD — Motor Control Centre', revision: 'A', status: 'Draft', sourceFolder: '/Electrical/SLDs', render: true, include: true },
+  { number: 'C-4401-LAY-008', title: 'Civil Layout — Pipe Rack', revision: 'B', status: 'Approved', sourceFolder: '/Civil/Layouts', render: false, include: true }];
+
+
+  const toggle = (n: string) => setSelected((s) => ({ ...s, [n]: !s[n] }));
+  const confirm = () => {
+    if (tab === 'manual') {
+      const lines = manualNumbers.split('\n').map((l) => l.trim()).filter(Boolean);
+      const docs = lines.map((number) => ({
+        number,
+        title: '(Resolved on save)',
+        revision: '—',
+        status: 'Pending',
+        sourceFolder: '— added by number —',
+        render: true,
+        include: true
+      } as PackageDoc));
+      onAdd(docs);
+      return;
+    }
+    const picked = sources.filter((d) => selected[d.number]);
+    onAdd(picked);
+  };
+
+  const tabs = [
+  { id: 'folder', label: 'Folder browser', icon: FolderIcon },
+  { id: 'search', label: 'Search results', icon: SearchIcon },
+  { id: 'view', label: 'Saved view', icon: BookmarkIcon },
+  { id: 'register', label: 'Document register', icon: ListIcon },
+  { id: 'manual', label: 'Enter numbers', icon: HashIcon }] as
+  const;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-200">
+          <h3 className="text-base font-semibold text-neutral-900">Add documents to package</h3>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-700"><XIcon size={18} /></button>
+        </div>
+        <div className="flex border-b border-neutral-200">
+          {tabs.map((t) =>
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`px-4 py-2.5 text-sm inline-flex items-center gap-1.5 border-b-2 ${
+            tab === t.id ?
+            'border-[#0461BA] text-[#0461BA]' :
+            'border-transparent text-neutral-500 hover:text-neutral-900'}`
+            }>
+
+              <t.icon size={14} />
+              {t.label}
+            </button>
+          )}
+        </div>
+        <div className="flex-1 overflow-auto p-4">
+          {tab !== 'manual' &&
+          <>
+              <p className="text-xs text-neutral-500 mb-3">
+                {tab === 'folder' && 'Browse the folder tree and pick documents from anywhere.'}
+                {tab === 'search' && 'Results for: "pump skid" — across all folders.'}
+                {tab === 'view' && 'Saved view: "Mechanical Area 02 — for IFR".'}
+                {tab === 'register' && 'Document register filtered by discipline and area.'}
+              </p>
+              <div className="border border-neutral-200 rounded-md">
+                {sources.map((d) =>
+              <label key={d.number} className="flex items-center gap-3 px-3 py-2 border-b border-neutral-100 last:border-0 hover:bg-neutral-50 cursor-pointer">
+                    <input type="checkbox" checked={!!selected[d.number]} onChange={() => toggle(d.number)} />
+                    <span className="font-mono text-xs w-32">{d.number}</span>
+                    <span className="text-sm flex-1 truncate">{d.title}</span>
+                    <span className="text-xs text-neutral-500">{d.sourceFolder}</span>
+                    <span className="font-mono text-xs text-neutral-500">{d.revision}</span>
+                  </label>
+              )}
+              </div>
+            </>
+          }
+          {tab === 'manual' &&
+          <div>
+              <p className="text-xs text-neutral-500 mb-2">Paste document numbers, one per line.</p>
+              <textarea
+              value={manualNumbers}
+              onChange={(e) => setManualNumbers(e.target.value)}
+              rows={10}
+              placeholder={'P-1001-PID-001\nE-2004-SLD-014\nM-3012-GA-006'}
+              className="w-full p-3 rounded-md border border-neutral-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#0461BA]" />
+
+            </div>
+          }
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-neutral-200">
+          <button onClick={onClose} className="h-9 px-4 rounded-md border border-neutral-200 text-sm hover:bg-neutral-50">Cancel</button>
+          <button onClick={confirm} className="h-9 px-4 rounded-md bg-[#0461BA] text-white text-sm hover:bg-[#035299]">Add to package</button>
+        </div>
+      </div>
+    </div>);
+
+}
+
+// ---------- Detail ----------
+function PackageDetail({
+  pkg,
+  onBack,
+  onRepackage,
+  onAction
+
+
+
+
+}: {pkg: PackageObject;onBack: () => void;onRepackage: () => void;onAction: (msg: string) => void;}) {
+  const [tab, setTab] = useState<'overview' | 'contents' | 'versions' | 'changelog' | 'distribution' | 'activity'>('overview');
+
+  return (
+    <div>
+      <button
+        onClick={onBack}
+        className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 mb-3">
+
+        <ArrowLeftIcon size={14} /> Packages
+      </button>
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <div className="font-mono text-xs text-neutral-500 mb-1">{pkg.reference}</div>
+          <h1 className="text-2xl font-semibold text-neutral-900">{pkg.title}</h1>
+          <p className="text-sm text-neutral-500 mt-1 max-w-2xl">{pkg.description}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${statusStyles[pkg.status]}`}>
+            {pkg.status}
+          </span>
+          <span className="font-mono text-xs px-2 py-1 bg-neutral-100 rounded">Rev {pkg.revision}</span>
+        </div>
+      </div>
+
+      {/* Action bar */}
+      <div className="flex items-center gap-2 mt-4 mb-4">
+        <button onClick={onRepackage} className="h-8 px-3 rounded-md bg-[#0461BA] text-white text-sm hover:bg-[#035299] inline-flex items-center gap-1.5">
+          <RefreshCwIcon size={14} /> Repackage
+        </button>
+        <button onClick={() => onAction('Transmittal started')} className="h-8 px-3 rounded-md border border-neutral-200 text-sm hover:bg-neutral-50 inline-flex items-center gap-1.5">
+          <SendIcon size={14} /> Issue / Transmit
+        </button>
+        <button onClick={() => onAction('Downloading PDF…')} className="h-8 px-3 rounded-md border border-neutral-200 text-sm hover:bg-neutral-50 inline-flex items-center gap-1.5">
+          <DownloadIcon size={14} /> PDF
+        </button>
+        <button onClick={() => onAction('Downloading ZIP…')} className="h-8 px-3 rounded-md border border-neutral-200 text-sm hover:bg-neutral-50 inline-flex items-center gap-1.5">
+          <FileArchiveIcon size={14} /> ZIP
+        </button>
+        <button onClick={() => onAction('Share link copied')} className="h-8 px-3 rounded-md border border-neutral-200 text-sm hover:bg-neutral-50">
+          Share link
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-neutral-200 flex gap-1 mb-4">
+        {([
+        ['overview', 'Overview'],
+        ['contents', 'Contents'],
+        ['versions', 'Versions'],
+        ['changelog', 'Change Log'],
+        ['distribution', 'Distribution'],
+        ['activity', 'Activity']] as const).
+        map(([id, label]) =>
+        <button
+          key={id}
+          onClick={() => setTab(id)}
+          className={`px-4 py-2 text-sm border-b-2 -mb-px ${
+          tab === id ?
+          'border-[#0461BA] text-[#0461BA] font-medium' :
+          'border-transparent text-neutral-500 hover:text-neutral-900'}`
+          }>
+
+            {label}
+          </button>
+        )}
+      </div>
+
+      {tab === 'overview' &&
+      <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-2 bg-white border border-neutral-200 rounded-lg p-5 space-y-3">
+            <h3 className="text-sm font-semibold text-neutral-900 mb-2">Metadata</h3>
+            <div className="grid grid-cols-2 gap-y-2.5 gap-x-6 text-sm">
+              <Meta k="Type" v={pkg.type} />
+              <Meta k="Discipline" v={pkg.discipline} />
+              <Meta k="Area" v={pkg.area} />
+              <Meta k="Owner" v={pkg.owner} />
+              <Meta k="Due date" v={pkg.dueDate} />
+              <Meta k="Documents" v={String(pkg.documentCount)} />
+              <Meta k="Last generated" v={pkg.lastGenerated} />
+              <Meta k="Change state" v={pkg.changeState} />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className={`border rounded-lg p-4 ${pkg.changeState === 'Up to date' ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+              <div className="flex items-center gap-2 text-sm font-medium mb-1">
+                {pkg.changeState === 'Up to date' ?
+              <CheckIcon size={16} className="text-emerald-600" /> :
+
+              <AlertCircleIcon size={16} className="text-amber-600" />
+              }
+                {pkg.changeState}
+              </div>
+              <p className="text-xs text-neutral-600">
+                {pkg.changeState === 'Up to date' ?
+              'The package matches the latest source documents.' :
+              'Source documents have changed since this package was generated. Repackage to create a new version.'}
+              </p>
+            </div>
+            <div className="border border-neutral-200 rounded-lg p-4 bg-white text-sm">
+              <div className="flex items-center gap-2 text-neutral-500 text-xs mb-2">
+                <ClockIcon size={12} /> Recent
+              </div>
+              <ul className="space-y-1.5 text-neutral-700 text-xs">
+                <li>{pkg.owner} generated {pkg.revision}</li>
+                <li>3 documents revised in source folders</li>
+                <li>Transmittal TR-2026-118 issued</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      }
+
+      {tab === 'contents' &&
+      <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600">
+              <tr>
+                <th className="w-8"></th>
+                <th className="text-left px-3 py-2.5 font-medium">Document #</th>
+                <th className="text-left px-3 py-2.5 font-medium">Title</th>
+                <th className="text-left px-3 py-2.5 font-medium">Rev</th>
+                <th className="text-left px-3 py-2.5 font-medium">Status</th>
+                <th className="text-left px-3 py-2.5 font-medium">Source folder</th>
+                <th className="text-left px-3 py-2.5 font-medium">Render</th>
+                <th className="text-left px-3 py-2.5 font-medium">Include</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pkg.documents.length === 0 &&
+            <tr><td colSpan={8} className="p-8 text-center text-neutral-500">No documents in this package yet.</td></tr>
+            }
+              {pkg.documents.map((d, i) =>
+            <tr key={i} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50/60">
+                  <td className="px-2 text-neutral-400"><GripVerticalIcon size={14} /></td>
+                  <td className="px-3 py-2 font-mono text-xs">{d.number}</td>
+                  <td className="px-3 py-2">{d.title}</td>
+                  <td className="px-3 py-2 font-mono text-xs">{d.revision}</td>
+                  <td className="px-3 py-2 text-neutral-600">{d.status}</td>
+                  <td className="px-3 py-2 text-xs text-neutral-500">{d.sourceFolder}</td>
+                  <td className="px-3 py-2">
+                    <span className={`text-xs px-2 py-0.5 rounded border ${d.render ? 'bg-[#E8F1FB] border-[#BAD4EE] text-[#0461BA]' : 'bg-white border-neutral-200 text-neutral-500'}`}>
+                      {d.render ? 'PDF' : 'Link only'}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">
+                    <span className={`text-xs ${d.include ? 'text-emerald-700' : 'text-neutral-400'}`}>
+                      {d.include ? 'Included' : 'Excluded'}
+                    </span>
+                  </td>
+                </tr>
+            )}
+            </tbody>
+          </table>
+        </div>
+      }
+
+      {tab === 'versions' &&
+      <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600">
+              <tr>
+                <th className="text-left px-4 py-2.5 font-medium">Version</th>
+                <th className="text-left px-4 py-2.5 font-medium">Generated</th>
+                <th className="text-left px-4 py-2.5 font-medium">By</th>
+                <th className="text-left px-4 py-2.5 font-medium">Change summary</th>
+                <th className="text-right px-4 py-2.5 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pkg.versions.length === 0 &&
+            <tr><td colSpan={5} className="p-8 text-center text-neutral-500">No versions yet.</td></tr>
+            }
+              {pkg.versions.map((v, i) =>
+            <tr key={i} className="border-b border-neutral-100 last:border-0">
+                  <td className="px-4 py-2.5 font-mono text-xs">{v.version}</td>
+                  <td className="px-4 py-2.5">{v.generatedDate}</td>
+                  <td className="px-4 py-2.5 text-neutral-700">{v.generatedBy}</td>
+                  <td className="px-4 py-2.5 text-neutral-600">{v.summary}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <button onClick={() => onAction(`Downloading ${v.version}…`)} className="text-[#0461BA] hover:underline text-xs inline-flex items-center gap-1">
+                      <DownloadIcon size={12} /> Download
+                    </button>
+                  </td>
+                </tr>
+            )}
+            </tbody>
+          </table>
+        </div>
+      }
+
+      {tab === 'changelog' &&
+      <div className="bg-white border border-neutral-200 rounded-lg p-5">
+          <h3 className="text-sm font-semibold text-neutral-900 mb-3">Changes since last generation</h3>
+          {pkg.changeLog.length === 0 ?
+        <p className="text-sm text-neutral-500">No changes detected. The package is up to date with its source documents.</p> :
+
+        <ul className="divide-y divide-neutral-100">
+              {pkg.changeLog.map((c, i) =>
+          <li key={i} className="py-2.5 flex items-start gap-3">
+                  <span className="text-xs px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 font-medium w-32 text-center flex-shrink-0">
+                    {c.type}
+                  </span>
+                  <span className="font-mono text-xs text-neutral-700 w-40 flex-shrink-0">{c.doc}</span>
+                  <span className="text-sm text-neutral-600">{c.detail}</span>
+                </li>
+          )}
+            </ul>
+        }
+        </div>
+      }
+
+      {tab === 'distribution' &&
+      <div className="grid grid-cols-2 gap-4">
+          <ActionCard
+          icon={SendIcon}
+          title="Send via transmittal"
+          desc="Issue this package as a controlled transmittal to internal or external recipients."
+          cta="Start transmittal"
+          onClick={() => onAction('Transmittal started')} />
+
+          <ActionCard
+          icon={GitIconLike}
+          title="Start review workflow"
+          desc="Route this package through a multi-step review and approval workflow."
+          cta="Start workflow"
+          onClick={() => onAction('Workflow started')} />
+
+          <ActionCard
+          icon={DownloadIcon}
+          title="Download as PDF"
+          desc="Single PDF with coversheet, sections and rendered documents in package order."
+          cta="Download PDF"
+          onClick={() => onAction('Downloading PDF…')} />
+
+          <ActionCard
+          icon={FileArchiveIcon}
+          title="Download as ZIP"
+          desc="ZIP archive containing the coversheet PDF and all included documents."
+          cta="Download ZIP"
+          onClick={() => onAction('Downloading ZIP…')} />
+
+          <ActionCard
+          icon={FileTextIcon}
+          title="Share package link"
+          desc="Generate a controlled link for stakeholders to view this package."
+          cta="Copy link"
+          onClick={() => onAction('Share link copied')} />
+
+        </div>
+      }
+
+      {tab === 'activity' &&
+      <div className="bg-white border border-neutral-200 rounded-lg p-5">
+          <ul className="space-y-3 text-sm">
+            <ActivityItem who={pkg.owner} what={`generated revision ${pkg.revision}`} when={pkg.lastGenerated} />
+            <ActivityItem who="System" what="detected 3 source document revisions" when="2 days ago" />
+            <ActivityItem who="Mark Doyle" what="added 2 documents to package" when="3 days ago" />
+            <ActivityItem who="Sarah Chen" what="created package" when="2026-02-02" />
+          </ul>
+        </div>
+      }
+    </div>);
+
+}
+
+function Meta({ k, v }: {k: string;v: string;}) {
+  return (
+    <div>
+      <div className="text-xs text-neutral-500">{k}</div>
+      <div className="text-sm text-neutral-900">{v}</div>
+    </div>);
+
+}
+
+function ActionCard({
+  icon: Icon, title, desc, cta, onClick
+
+
+
+
+}: {icon: React.ElementType;title: string;desc: string;cta: string;onClick: () => void;}) {
+  return (
+    <div className="bg-white border border-neutral-200 rounded-lg p-5">
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-md bg-[#E8F1FB] text-[#0461BA] flex items-center justify-center flex-shrink-0">
+          <Icon size={18} />
+        </div>
+        <div className="flex-1">
+          <h4 className="text-sm font-semibold text-neutral-900">{title}</h4>
+          <p className="text-xs text-neutral-500 mt-1 mb-3">{desc}</p>
+          <button onClick={onClick} className="h-8 px-3 rounded-md border border-neutral-200 text-sm hover:bg-neutral-50">
+            {cta}
+          </button>
+        </div>
+      </div>
+    </div>);
+
+}
+
+function GitIconLike(props: any) {
+  return <CheckIcon {...props} />;
+}
+
+function ActivityItem({ who, what, when }: {who: string;what: string;when: string;}) {
+  return (
+    <li className="flex items-start gap-3">
+      <div className="w-7 h-7 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500 flex-shrink-0">
+        <UserIcon size={13} />
+      </div>
+      <div className="text-sm">
+        <span className="font-medium text-neutral-900">{who}</span>{' '}
+        <span className="text-neutral-600">{what}</span>
+        <div className="text-xs text-neutral-400">{when}</div>
+      </div>
+    </li>);
+
+}

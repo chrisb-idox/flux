@@ -12,13 +12,15 @@ interface CollapsibleFilterPanelProps {
   mode: 'filter' | 'folder';
   onModeChange: (mode: 'filter' | 'folder') => void;
   children: React.ReactNode;
+  topSlot?: React.ReactNode;
 }
 export function CollapsibleFilterPanel({
   isExpanded,
   onToggle,
   mode,
   onModeChange,
-  children
+  children,
+  topSlot
 }: CollapsibleFilterPanelProps) {
   return (
     <div className="relative h-full flex-shrink-0 flex">
@@ -59,8 +61,13 @@ export function CollapsibleFilterPanel({
             id="filter-panel-content"
             className="h-full flex flex-col w-[320px]">
             
-              {/* Segmented Toggle - Enhanced Active State */}
-              <div className="px-4 pt-4 pb-3 shrink-0">
+              {topSlot &&
+              <div className="px-4 h-10 shrink-0 flex items-center">
+                  {topSlot}
+                </div>
+              }
+              {/* Segmented Toggle - aligned with grid column headers */}
+              <div className="px-4 py-2 shrink-0">
                 <div className="flex bg-neutral-100 p-1 rounded-lg border border-neutral-200/50">
                   <button
                   onClick={() => onModeChange('folder')}

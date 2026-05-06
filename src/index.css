@@ -94,3 +94,39 @@
   --color-plum-800: #381C31;
   --color-plum-900: #1C0E19;
 }
+
+/* ----- Dark theme overrides ----- */
+html[data-theme='dark'] {
+  --main-bg-color: #0f172a;
+  --element-bg-color: #1e293b;
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+html[data-theme='dark'] body { background-color: #0f172a; color: #e5e7eb; }
+
+html[data-theme='dark'] .bg-white { background-color: #1e293b !important; }
+html[data-theme='dark'] .bg-neutral-50 { background-color: #0f172a !important; }
+html[data-theme='dark'] .bg-neutral-50\/60 { background-color: rgba(15,23,42,0.6) !important; }
+html[data-theme='dark'] .bg-neutral-100 { background-color: #334155 !important; }
+html[data-theme='dark'] .bg-neutral-200 { background-color: #475569 !important; }
+html[data-theme='dark'] .hover\:bg-neutral-50:hover { background-color: #334155 !important; }
+html[data-theme='dark'] .hover\:bg-neutral-100:hover { background-color: #475569 !important; }
+
+html[data-theme='dark'] .text-neutral-900 { color: #f1f5f9 !important; }
+html[data-theme='dark'] .text-neutral-800 { color: #e2e8f0 !important; }
+html[data-theme='dark'] .text-neutral-700 { color: #cbd5e1 !important; }
+html[data-theme='dark'] .text-neutral-600 { color: #cbd5e1 !important; }
+html[data-theme='dark'] .text-neutral-500 { color: #94a3b8 !important; }
+html[data-theme='dark'] .text-neutral-400 { color: #64748b !important; }
+html[data-theme='dark'] .text-neutral-300 { color: #475569 !important; }
+
+html[data-theme='dark'] .border-neutral-200 { border-color: #334155 !important; }
+html[data-theme='dark'] .border-neutral-100 { border-color: #1e293b !important; }
+html[data-theme='dark'] .border-neutral-300 { border-color: #475569 !important; }
+html[data-theme='dark'] .divide-neutral-100 > :not([hidden]) ~ :not([hidden]) { border-color: #1e293b !important; }
+html[data-theme='dark'] .divide-neutral-200 > :not([hidden]) ~ :not([hidden]) { border-color: #334155 !important; }
+
+html[data-theme='dark'] .bg-\[\#E8F1FB\] { background-color: #1e3a5f !important; }
+html[data-theme='dark'] .text-\[\#0461BA\] { color: #93c5fd !important; }
+html[data-theme='dark'] .bg-\[\#F8FAFC\] { background-color: #0f172a !important; }
+

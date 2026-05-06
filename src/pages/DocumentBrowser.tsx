@@ -28,7 +28,7 @@ import {
   XIcon,
   LoaderIcon } from
 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 type SortDirection = 'asc' | 'desc' | null;
 type ColumnKey =
@@ -66,11 +66,11 @@ function ProjectDropdown() {
     <div className="relative inline-block" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="text-xl font-bold text-neutral-900 tracking-tight hover:text-[#2A5FB8] transition-colors flex items-center gap-2">
+        className="text-sm font-semibold text-neutral-900 tracking-tight hover:text-[#2A5FB8] transition-colors flex items-center gap-1.5">
         
         {selectedProject}
         <ChevronDownIcon
-          size={18}
+          size={14}
           className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         
       </button>
@@ -168,12 +168,12 @@ function ViewModeDropdown({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 border border-neutral-200 text-sm font-medium rounded-lg bg-white text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent transition-all">
+        className="flex items-center gap-1.5 px-2.5 h-7 border border-neutral-200 text-xs font-medium rounded-md bg-white text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent transition-all">
         
         {currentView.icon}
         View
         <ChevronDownIcon
-          size={14}
+          size={12}
           className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         
       </button>
@@ -369,6 +369,17 @@ export function DocumentBrowser() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isChatMode, setIsChatMode] = useState(false);
   const [activeRailItem, setActiveRailItem] = useState('dashboard');
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (location.pathname === '/chat') {
+      setIsChatMode(true);
+      setActiveRailItem('chat');
+    } else {
+      setIsChatMode(false);
+      setActiveRailItem('documents');
+    }
+  }, [location.pathname]);
   const [highlightedDocId, setHighlightedDocId] = useState<string | null>(null);
   // Column filters for table view
   const [columnFilters, setColumnFilters] = useState<
@@ -573,16 +584,13 @@ export function DocumentBrowser() {
     }
   };
   const handleChatClick = () => {
-    setIsChatMode(true);
-    setActiveRailItem('chat');
+    navigate('/chat');
   };
   const handleExitChat = () => {
-    setIsChatMode(false);
-    setActiveRailItem('dashboard');
+    navigate('/');
   };
   const handleDocumentSelectFromChat = (docId: string) => {
-    setIsChatMode(false);
-    setActiveRailItem('dashboard');
+    navigate('/');
     setHighlightedDocId(docId);
     setSelectedFolderId(null);
     setSelectedStatus([]);
@@ -626,7 +634,7 @@ export function DocumentBrowser() {
 
   return (
     <div
-      className="h-screen font-sans overflow-hidden p-3"
+      className="h-[calc(100vh-24px)] mt-6 font-sans overflow-hidden p-3"
       style={{
         backgroundColor: 'var(--main-bg-color, #E5E5E5)'
       }}>
@@ -657,7 +665,7 @@ export function DocumentBrowser() {
           transition={{
             duration: 0.25
           }}
-          className="flex h-full gap-6 pl-14">
+          className="flex h-full gap-2 pl-[52px]">
           
             {/* Left Rail */}
             <LeftRail
@@ -671,7 +679,8 @@ export function DocumentBrowser() {
             isExpanded={isFilterExpanded}
             onToggle={() => setIsFilterExpanded(!isFilterExpanded)}
             mode={leftPanelMode}
-            onModeChange={setLeftPanelMode}>
+            onModeChange={setLeftPanelMode}
+            topSlot={<ProjectDropdown />}>
             
               {leftPanelMode === 'filter' ?
             <FilterPanel
@@ -697,55 +706,23 @@ export function DocumentBrowser() {
             <div
             className="flex-1 flex flex-col min-w-0 rounded-lg shadow-lg overflow-hidden"
             style={{
-              backgroundColor: 'var(--theme-element, #FFFFFF)'
+              backgroundColor: 'var(--element-bg-color, #FFFFFF)'
             }}>
             
               {/* Header */}
-              <header className="border-b border-neutral-200 px-4 py-3 bg-white shrink-0">
-                <div className="flex items-center justify-between">
-                  <div className="relative">
-                    <ProjectDropdown />
-                    <p className="text-sm text-neutral-500 mt-0.5">
-                      {filteredDocuments.length} documents found
-                      {displayedCount < filteredDocuments.length &&
-                    <span className="text-neutral-400">
-                          {' '}
-                          • Showing {displayedCount}
-                        </span>
-                    }
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {/* FusionLive Branding */}
-                    <div
-                    className="text-xl font-bold tracking-tight mr-4"
-                    style={{
-                      color: '#2A5FB8'
-                    }}>
-                    
-                      FusionLive
-                    </div>
-
-                    {/* Sort Select */}
-                    <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                    className="px-3 py-2 border border-neutral-200 text-sm font-medium rounded-lg bg-white text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent transition-all cursor-pointer">
-                    
-                      <option value="dateModified">
-                        Sort by Date Modified
-                      </option>
-                      <option value="title">Sort by Title</option>
-                      <option value="id">Sort by Document ID</option>
-                    </select>
-
-                    {/* View Mode Dropdown */}
-                    <ViewModeDropdown
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode} />
-                  
-                  </div>
-                </div>
+              <header className="px-4 h-10 bg-white shrink-0 flex items-center justify-between">
+                <p className="text-xs text-neutral-500">
+                  {filteredDocuments.length} documents found
+                  {displayedCount < filteredDocuments.length &&
+                <span className="text-neutral-400">
+                      {' '}
+                      • Showing {displayedCount}
+                    </span>
+                }
+                </p>
+                <ViewModeDropdown
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode} />
               </header>
 
               {/* Filter Pills */}

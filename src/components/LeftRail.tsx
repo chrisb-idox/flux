@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboardIcon,
   FolderKanbanIcon,
   MessageCircleIcon,
   SettingsIcon,
-  UserIcon } from
+  UserIcon,
+  PackageIcon,
+  GitBranchIcon,
+  SendIcon,
+  BarChart3Icon,
+  ShieldIcon,
+  FolderIcon } from
 'lucide-react';
 import { ColorCustomizer } from './ColorCustomizer';
 interface LeftRailProps {
@@ -27,11 +34,44 @@ export function LeftRail({
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [showColorCustomizer, setShowColorCustomizer] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
   const navItems: NavItem[] = [
   {
     id: 'dashboard',
     icon: LayoutDashboardIcon,
     label: 'Dashboard'
+  },
+  {
+    id: 'documents',
+    icon: FolderIcon,
+    label: 'Documents',
+    onClick: () => navigate('/')
+  },
+  {
+    id: 'packages',
+    icon: PackageIcon,
+    label: 'Packages',
+    onClick: () => navigate('/packages')
+  },
+  {
+    id: 'workflows',
+    icon: GitBranchIcon,
+    label: 'Workflows'
+  },
+  {
+    id: 'transmittals',
+    icon: SendIcon,
+    label: 'Transmittals'
+  },
+  {
+    id: 'reports',
+    icon: BarChart3Icon,
+    label: 'Reports'
+  },
+  {
+    id: 'admin',
+    icon: ShieldIcon,
+    label: 'Admin'
   },
   {
     id: 'projects',
@@ -42,7 +82,7 @@ export function LeftRail({
     id: 'chat',
     icon: MessageCircleIcon,
     label: 'Chat',
-    onClick: onChatClick
+    onClick: () => navigate('/chat')
   }];
 
   const bottomItems: NavItem[] = [
@@ -118,6 +158,13 @@ export function LeftRail({
   };
   return (
     <>
+      {/* Dim backdrop when rail expanded */}
+      <motion.div
+        initial={false}
+        animate={{ opacity: isHovered ? 1 : 0 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+        className="fixed inset-x-0 top-6 bottom-0 bg-black/20 z-10 pointer-events-none" />
+
       <motion.nav
         initial={false}
         animate={{
@@ -128,7 +175,7 @@ export function LeftRail({
           ease: 'easeOut'
         }}
         onKeyDown={handleKeyDown}
-        className="fixed left-0 top-0 h-screen bg-white border-r border-neutral-200 z-20 flex flex-col py-2 overflow-visible"
+        className="fixed left-0 top-6 h-[calc(100vh-24px)] bg-white border-r border-neutral-200 z-20 flex flex-col py-2 overflow-visible"
         role="navigation"
         aria-label="Main navigation"
         onMouseEnter={() => setIsHovered(true)}
