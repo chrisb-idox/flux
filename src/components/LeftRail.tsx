@@ -39,13 +39,14 @@ export function LeftRail({
   {
     id: 'dashboard',
     icon: LayoutDashboardIcon,
-    label: 'Dashboard'
+    label: 'Dashboard',
+    onClick: () => navigate('/')
   },
   {
     id: 'documents',
     icon: FolderIcon,
     label: 'Documents',
-    onClick: () => navigate('/')
+    onClick: () => navigate('/documents')
   },
   {
     id: 'packages',

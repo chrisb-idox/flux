@@ -27,8 +27,11 @@ import {
   ChevronUpIcon,
   XIcon,
   LoaderIcon,
-  SparklesIcon } from
+  SparklesIcon,
+  CopyIcon,
+  CheckIcon } from
 'lucide-react';
+import { useClipboard } from '../contexts/ClipboardContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 type SortDirection = 'asc' | 'desc' | null;
@@ -357,6 +360,8 @@ function ColumnHeaderDropdown({
 }
 const ITEMS_PER_PAGE = 20;
 export function DocumentBrowser() {
+  const { addToClipboard, isInClipboard } = useClipboard();
+  const [clipboardStates, setClipboardStates] = useState<Record<string, boolean>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [selectedDocType, setSelectedDocType] = useState<string[]>([]);
@@ -895,6 +900,23 @@ export function DocumentBrowser() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                addToClipboard(doc);
+                                setClipboardStates((prev) => ({ ...prev, [doc.id]: true }));
+                                setTimeout(() => setClipboardStates((prev) => ({ ...prev, [doc.id]: false })), 2000);
+                              }}
+                              title={isInClipboard(doc.id) ? `${doc.id} is in clipboard` : `Add ${doc.id} to clipboard`}
+                              aria-label={isInClipboard(doc.id) ? `${doc.id} is in clipboard` : `Add ${doc.id} to clipboard`}
+                              className={`opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all w-6 h-6 rounded-md inline-flex items-center justify-center ${
+                                isInClipboard(doc.id) || clipboardStates[doc.id]
+                                  ? 'bg-emerald-500 text-white'
+                                  : 'text-neutral-600 hover:bg-neutral-100'
+                              }`}>
+                                    {isInClipboard(doc.id) || clipboardStates[doc.id] ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
+                                  </button>
+                                  <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 navigate(`/chat?ask=${encodeURIComponent(`${doc.id} — ${doc.title}`)}&askKind=document`);
                               }}
                               title={`Ask Flint about ${doc.id}`}
@@ -1052,7 +1074,25 @@ export function DocumentBrowser() {
                                 </td>
                                 <td
                             className={`${viewMode === 'compact-table' ? 'p-2' : 'p-4'} text-right`}>
-                                  <button
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                addToClipboard(doc);
+                                setClipboardStates((prev) => ({ ...prev, [doc.id]: true }));
+                                setTimeout(() => setClipboardStates((prev) => ({ ...prev, [doc.id]: false })), 2000);
+                              }}
+                              title={isInClipboard(doc.id) ? `${doc.id} is in clipboard` : `Add ${doc.id} to clipboard`}
+                              aria-label={isInClipboard(doc.id) ? `${doc.id} is in clipboard` : `Add ${doc.id} to clipboard`}
+                              className={`opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all w-7 h-7 rounded-md inline-flex items-center justify-center ${
+                                isInClipboard(doc.id) || clipboardStates[doc.id]
+                                  ? 'bg-emerald-500 text-white'
+                                  : 'text-neutral-600 hover:bg-neutral-100'
+                              }`}>
+                                    {isInClipboard(doc.id) || clipboardStates[doc.id] ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+                                  </button>
+                                    <button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -1063,6 +1103,7 @@ export function DocumentBrowser() {
                               className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity w-7 h-7 rounded-md inline-flex items-center justify-center text-[#0461BA] hover:bg-[#E8F1FB]">
                                     <SparklesIcon size={14} />
                                   </button>
+                                  </div>
                                 </td>
                               </tr>
                         )}

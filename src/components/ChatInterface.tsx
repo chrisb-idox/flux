@@ -18,11 +18,15 @@ import {
   Building2Icon,
   Globe2Icon,
   ChevronDownIcon,
-  CheckIcon } from
+  CheckIcon,
+  FileIcon } from
 'lucide-react';
 import { mockDocuments } from '../data/mockDocuments';
 import { statusColors } from './DocumentCard';
 import { LeftRail } from './LeftRail';
+import { ClipboardPanel } from './ClipboardPanel';
+import { useClipboard } from '../contexts/ClipboardContext';
+import { Document } from '../types/document';
 interface ChatInterfaceProps {
   onExit: () => void;
   onDocumentSelect: (docId: string) => void;
@@ -34,6 +38,7 @@ interface ChatMessage {
   content: React.ReactNode;
   sender: 'user' | 'flint';
   timestamp: string;
+  attachments?: Document[];
 }
 type ChatScope =
   | { kind: 'enterprise' }
@@ -314,8 +319,67 @@ export function ChatInterface({
     });
   };
   const [inputValue, setInputValue] = useState('');
+  const [clipboardPanelOpen, setClipboardPanelOpen] = useState(false);
+  const [selectedClipboardDocs, setSelectedClipboardDocs] = useState<Document[]>([]);
+  const { clipboard } = useClipboard();
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const removePendingAttachment = (docId: string) => {
+    setSelectedClipboardDocs((prev) => prev.filter((doc) => doc.id !== docId));
+  };
+  const renderAttachmentChips = (
+    docs: Document[],
+    options?: {
+      removable?: boolean;
+      onRemove?: (docId: string) => void;
+      tone?: 'draft' | 'sent';
+    }
+  ) => {
+    const tone = options?.tone ?? 'draft';
+    const removable = options?.removable ?? false;
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        {docs.map((doc) => (
+          <div
+            key={doc.id}
+            className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${
+              tone === 'sent'
+                ? 'bg-white/10 border-white/20 text-white'
+                : 'bg-[#E8F1FB] border-[#0461BA]/30 text-[#0461BA]'
+            }`}>
+            <FileIcon size={12} className={tone === 'sent' ? 'text-white' : 'text-[#0461BA]'} />
+            <span className="text-xs font-medium">{doc.id}</span>
+            {removable && options?.onRemove && (
+              <button
+                onClick={() => options.onRemove?.(doc.id)}
+                className={`transition-colors ${
+                  tone === 'sent'
+                    ? 'text-white/70 hover:text-white'
+                    : 'text-[#0461BA]/60 hover:text-[#0461BA]'
+                }`}
+                aria-label={`Remove ${doc.id}`}>
+                <XIcon size={12} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+  const renderClipboardTrigger = () => (
+    <button
+      onClick={() => setClipboardPanelOpen(true)}
+      title={`Add from clipboard (${clipboard.length})`}
+      className="w-12 h-12 rounded-full bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-600 flex items-center justify-center transition-colors shrink-0 shadow-sm relative"
+      aria-label="Add from clipboard">
+      <PlusIcon size={18} />
+      {clipboard.length > 0 && (
+        <span className="absolute top-0 right-0 w-5 h-5 rounded-full bg-[#0461BA] text-white text-[10px] font-bold flex items-center justify-center">
+          {clipboard.length}
+        </span>
+      )}
+    </button>
+  );
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: 'smooth'
@@ -324,8 +388,46 @@ export function ChatInterface({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
-  const buildResponseForQuery = (query: string): React.ReactNode => {
+  const buildResponseForQuery = (query: string, attachments: Document[] = []): React.ReactNode => {
     const lowerQuery = query.toLowerCase();
+    if (!lowerQuery && attachments.length > 0) {
+      return (
+        <div>
+          <p className="mb-3">
+            I have these attached documents in context now. Ask a question about them and I will answer from the selected set.
+          </p>
+          <div className="space-y-2 mb-3">
+            {attachments.map((doc) =>
+            <button
+              key={doc.id}
+              onClick={() => onDocumentSelect(doc.id)}
+              className="w-full flex items-center gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg hover:bg-neutral-100 hover:border-[#0461BA]/30 transition-colors group text-left">
+
+                <div className="w-10 h-10 rounded-md bg-[#E8F1FB] flex items-center justify-center text-[#0461BA] shrink-0">
+                  <FileTextIcon size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-neutral-900 group-hover:text-[#0461BA] transition-colors truncate">
+                    {doc.id}
+                  </div>
+                  <div className="text-xs text-neutral-500 truncate">
+                    {doc.title}
+                  </div>
+                </div>
+                <span
+                className={`text-[10px] font-medium px-2 py-0.5 rounded-md border whitespace-nowrap shrink-0 ${statusColors[doc.status]}`}>
+
+                  {doc.status}
+                </span>
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-neutral-600">
+            Ask for a summary, comparison, revision history, or action list for these attachments.
+          </p>
+        </div>);
+
+    }
     if (
     lowerQuery.includes('tensile') ||
     lowerQuery.includes('pressure') ||
@@ -459,11 +561,13 @@ export function ChatInterface({
 
     }
     // Default fallback with random documents
-    const docs = mockDocuments.slice(0, 3);
+    const docs = attachments.length > 0 ? attachments : mockDocuments.slice(0, 3);
     return (
       <div>
         <p className="mb-3">
-          Here are some relevant documents I found related to your query:
+          {attachments.length > 0 ?
+          'I used the attached documents for this prompt. Here are the files currently in context:' :
+          'Here are some relevant documents I found related to your query:'}
         </p>
         <div className="space-y-2 mb-3">
           {docs.map((doc) =>
@@ -499,7 +603,8 @@ export function ChatInterface({
   };
   const handleSend = (overrideValue?: string) => {
     const text = overrideValue || inputValue;
-    if (!text.trim()) return;
+    const attachments = selectedClipboardDocs;
+    if (!text.trim() && attachments.length === 0) return;
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       content: text,
@@ -507,35 +612,39 @@ export function ChatInterface({
       timestamp: new Date().toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit'
-      })
+      }),
+      attachments
     };
     // Auto-title from first user message
     setConversations((prev) => {
       let id = activeId;
       let list = prev;
       if (!id) {
+        const titleSource = text.trim() || attachments.map((doc) => doc.id).join(', ');
         id = 'c-' + Date.now();
-        list = [{ id, title: text.slice(0, 40), pinned: false, scope, updatedAt: Date.now(), messages: [] }, ...prev];
+        list = [{ id, title: titleSource.slice(0, 40), pinned: false, scope, updatedAt: Date.now(), messages: [] }, ...prev];
         setActiveId(id);
       }
       return list.map((c) => {
         if (c.id !== id) return c;
         const isFirstUser = !c.messages.some((m) => m.sender === 'user');
+        const titleSource = text.trim() || attachments.map((doc) => doc.id).join(', ');
         return {
           ...c,
-          title: isFirstUser ? text.slice(0, 40) : c.title,
+          title: isFirstUser ? titleSource.slice(0, 40) : c.title,
           messages: [...c.messages, userMsg],
           updatedAt: Date.now()
         };
       });
     });
     setInputValue('');
+    setSelectedClipboardDocs([]);
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
       const flintMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: buildResponseForQuery(text),
+        content: buildResponseForQuery(text, attachments),
         sender: 'flint',
         timestamp: new Date().toLocaleTimeString([], {
           hour: '2-digit',
@@ -680,24 +789,37 @@ export function ChatInterface({
             </>
           }
 
+            {selectedClipboardDocs.length > 0 && (
+              <div className="w-full mb-3 rounded-2xl border border-[#0461BA]/15 bg-white px-4 py-3 shadow-sm">
+                <p className="text-xs font-medium text-neutral-500 mb-2">Attached documents from clipboard</p>
+                {renderAttachmentChips(selectedClipboardDocs, {
+                  removable: true,
+                  onRemove: removePendingAttachment
+                })}
+              </div>
+            )}
+
             {/* Centered Input for Empty State */}
-            <div className="w-full relative shadow-sm rounded-full bg-white border border-neutral-200 focus-within:ring-2 focus-within:ring-[#0461BA] focus-within:border-transparent transition-all">
-              <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="E.g., What is the required tensile strength for the primary support beams?"
-              className="w-full pl-6 pr-16 py-4 rounded-full bg-transparent text-neutral-900 placeholder-neutral-400 focus:outline-none text-base"
-              autoFocus />
-            
-              <button
-              onClick={() => handleSend()}
-              disabled={!inputValue.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#0461BA] hover:bg-[#035299] disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors">
-              
-                <SendIcon size={18} className="ml-0.5" />
-              </button>
+            <div className="w-full max-w-[960px] mx-auto flex items-center gap-3">
+              {renderClipboardTrigger()}
+              <div className="flex-1 relative shadow-sm rounded-full bg-white border border-neutral-200 focus-within:ring-2 focus-within:ring-[#0461BA] focus-within:border-transparent transition-all">
+                <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="E.g., What is the required tensile strength for the primary support beams?"
+                className="w-full pl-6 pr-16 py-4 rounded-full bg-transparent text-neutral-900 placeholder-neutral-400 focus:outline-none text-base"
+                autoFocus />
+
+                <button
+                onClick={() => handleSend()}
+                disabled={!inputValue.trim() && selectedClipboardDocs.length === 0}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#0461BA] hover:bg-[#035299] disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors">
+
+                  <SendIcon size={18} className="ml-0.5" />
+                </button>
+              </div>
             </div>
 
             <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -754,8 +876,13 @@ export function ChatInterface({
                           Flint AI
                         </p>
                     }
+                      {message.sender === 'user' && message.attachments && message.attachments.length > 0 && (
+                        <div className="mb-3">
+                          {renderAttachmentChips(message.attachments, { tone: 'sent' })}
+                        </div>
+                      )}
                       <div className="text-[15px] leading-relaxed">
-                        {message.content}
+                        {message.content || (message.sender === 'user' && message.attachments?.length ? 'Attached documents' : null)}
                       </div>
                     </div>
                   </motion.div>
@@ -813,6 +940,15 @@ export function ChatInterface({
       {/* Input Area (Only show when there are messages) */}
       {messages.length > 0 &&
       <div className="bg-white border-t border-neutral-200 p-4 shrink-0">
+          {selectedClipboardDocs.length > 0 && (
+            <div className="mb-3 max-w-[960px] mx-auto">
+              <p className="text-xs font-medium text-neutral-500 mb-2">Attached documents from clipboard</p>
+              {renderAttachmentChips(selectedClipboardDocs, {
+                removable: true,
+                onRemove: removePendingAttachment
+              })}
+            </div>
+          )}
           <div className="max-w-[960px] mx-auto flex items-center gap-3">
             <input
             type="text"
@@ -822,10 +958,12 @@ export function ChatInterface({
             placeholder="Ask a follow-up question..."
             className="flex-1 px-5 py-3.5 rounded-full bg-neutral-50 border border-neutral-200 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent text-sm transition-shadow"
             aria-label="Message input" />
-          
+
+            {renderClipboardTrigger()}
+
             <button
             onClick={() => handleSend()}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() && selectedClipboardDocs.length === 0}
             className="w-12 h-12 rounded-full bg-[#0461BA] hover:bg-[#035299] disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors shrink-0 shadow-sm"
             aria-label="Send message">
             
@@ -835,6 +973,22 @@ export function ChatInterface({
         </div>
       }
       </div>
+
+      <ClipboardPanel
+        isOpen={clipboardPanelOpen}
+        onClose={() => setClipboardPanelOpen(false)}
+        onSelect={(docs) => {
+          setSelectedClipboardDocs((prev) => {
+            const next = [...prev];
+            docs.forEach((doc) => {
+              if (!next.some((existing) => existing.id === doc.id)) {
+                next.push(doc);
+              }
+            });
+            return next;
+          });
+        }}
+      />
     </motion.div>);
 
 }
