@@ -34,6 +34,7 @@ import {
   ClipboardIcon } from
 'lucide-react';
 import { useClipboard } from '../contexts/ClipboardContext';
+import { useLocalization } from '../contexts/LocalizationContext';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -104,42 +105,42 @@ function getDocumentColumnText(document: Document, columnKey: ColumnKey) {
   return '';
 }
 
-function getGroupLabel(value: string) {
+function getGroupLabel(value: string, unassignedLabel: string) {
   const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : 'Unassigned';
+  return trimmed.length > 0 ? trimmed : unassignedLabel;
 }
 
 interface DocumentActionItem {
-  label: string;
-  submenu?: string[];
+  labelKey: string;
+  submenuKeys?: string[];
   danger?: boolean;
   dividerAbove?: boolean;
 }
 
 const DOCUMENT_ACTIONS: DocumentActionItem[] = [
-  { label: 'Add to Favorites' },
-  { label: 'Add Attachment' },
-  { label: 'Add to Package', submenu: ['Area 1 Processing', 'Piping System 20', 'Piping System Zone X'] },
-  { label: 'Change Life Cycle' },
-  { label: 'Check-Out' },
-  { label: 'Copy Link', submenu: ['Static', 'Dynamic'] },
-  { label: 'Copy markups to...' },
-  { label: 'Delete', danger: true },
-  { label: 'Edit Properties' },
-  { label: 'Lock' },
-  { label: 'Move' },
-  { label: 'Package' },
-  { label: 'Properties' },
-  { label: 'Rendition', submenu: ['Create', 'Download', 'Delete'] },
-  { label: 'Revise' },
-  { label: 'View' },
-  { label: 'Message', dividerAbove: true },
-  { label: 'Transmittal' },
-  { label: 'Formal Review' },
-  { label: 'Approval' },
-  { label: 'RFI' },
-  { label: 'Technical Query' },
-  { label: 'Change Request' }
+  { labelKey: 'documentBrowser.actions.addToFavorites' },
+  { labelKey: 'documentBrowser.actions.addAttachment' },
+  { labelKey: 'documentBrowser.actions.addToPackage', submenuKeys: ['documentBrowser.submenus.area1Processing', 'documentBrowser.submenus.pipingSystem20', 'documentBrowser.submenus.pipingSystemZoneX'] },
+  { labelKey: 'documentBrowser.actions.changeLifeCycle' },
+  { labelKey: 'documentBrowser.actions.checkOut' },
+  { labelKey: 'documentBrowser.actions.copyLink', submenuKeys: ['documentBrowser.submenus.static', 'documentBrowser.submenus.dynamic'] },
+  { labelKey: 'documentBrowser.actions.copyMarkups' },
+  { labelKey: 'documentBrowser.actions.delete', danger: true },
+  { labelKey: 'documentBrowser.actions.editProperties' },
+  { labelKey: 'documentBrowser.actions.lock' },
+  { labelKey: 'documentBrowser.actions.move' },
+  { labelKey: 'documentBrowser.actions.package' },
+  { labelKey: 'documentBrowser.actions.properties' },
+  { labelKey: 'documentBrowser.actions.rendition', submenuKeys: ['documentBrowser.submenus.create', 'documentBrowser.submenus.download', 'documentBrowser.submenus.delete'] },
+  { labelKey: 'documentBrowser.actions.revise' },
+  { labelKey: 'documentBrowser.actions.view' },
+  { labelKey: 'documentBrowser.actions.message', dividerAbove: true },
+  { labelKey: 'documentBrowser.actions.transmittal' },
+  { labelKey: 'documentBrowser.actions.formalReview' },
+  { labelKey: 'documentBrowser.actions.approval' },
+  { labelKey: 'documentBrowser.actions.rfi' },
+  { labelKey: 'documentBrowser.actions.technicalQuery' },
+  { labelKey: 'documentBrowser.actions.changeRequest' }
 ];
 
 function ViewModeDropdown({
@@ -149,6 +150,7 @@ function ViewModeDropdown({
 
 
 }: {viewMode: ViewMode;onViewModeChange: (mode: ViewMode) => void;}) {
+  const { t } = useLocalization();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const viewOptions: {
@@ -158,22 +160,22 @@ function ViewModeDropdown({
   }[] = [
   {
     mode: 'table',
-    label: 'Comfy Table',
+    label: t('documentBrowser.viewModes.comfyTable'),
     icon: <TableIcon size={16} />
   },
   {
     mode: 'compact-table',
-    label: 'Compact Table',
+    label: t('documentBrowser.viewModes.compactTable'),
     icon: <TableIcon size={16} />
   },
   {
     mode: 'grid',
-    label: 'Grid',
+    label: t('documentBrowser.viewModes.grid'),
     icon: <LayoutGridIcon size={16} />
   },
   {
     mode: 'list',
-    label: 'List',
+    label: t('documentBrowser.viewModes.list'),
     icon: <ListIcon size={16} />
   }];
 
@@ -314,6 +316,7 @@ function ColumnHeaderDropdown({
   onSortChange,
   onClearFilter
 }: ColumnHeaderDropdownProps) {
+  const { t } = useLocalization();
   const [isOpen, setIsOpen] = useState(false);
   const [filterValue, setFilterValue] = useState(filter?.value || '');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -375,7 +378,7 @@ function ColumnHeaderDropdown({
               
                 <input
                 type="text"
-                placeholder={`Filter ${label.toLowerCase()}...`}
+                placeholder={t('documentBrowser.filterColumn', { label: label.toLowerCase() })}
                 value={filterValue}
                 onChange={(e) => {
                   setFilterValue(e.target.value);
@@ -396,7 +399,7 @@ function ColumnHeaderDropdown({
               className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${filter?.sortDirection === 'asc' ? 'bg-[#E8F1FB] text-[#0461BA]' : 'text-neutral-700 hover:bg-neutral-50'}`}>
               
                 <ChevronUpIcon size={14} />
-                Sort Ascending
+                {t('documentBrowser.sortAscending')}
               </button>
               <button
               onClick={() => {
@@ -406,7 +409,7 @@ function ColumnHeaderDropdown({
               className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${filter?.sortDirection === 'desc' ? 'bg-[#E8F1FB] text-[#0461BA]' : 'text-neutral-700 hover:bg-neutral-50'}`}>
               
                 <ChevronDownIcon size={14} />
-                Sort Descending
+                {t('documentBrowser.sortDescending')}
               </button>
             </div>
 
@@ -421,7 +424,7 @@ function ColumnHeaderDropdown({
               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-error-600 hover:bg-error-50 rounded-md transition-colors">
               
                   <XIcon size={14} />
-                  Clear Filter
+                  {t('documentBrowser.clearFilter')}
                 </button>
               </div>
           }
@@ -433,6 +436,7 @@ function ColumnHeaderDropdown({
 }
 const ITEMS_PER_PAGE = 20;
 export function DocumentBrowser() {
+  const { t } = useLocalization();
   const { clipboard, addToClipboard, removeFromClipboard, clearClipboard, isInClipboard } = useClipboard();
   const { currentWorkspace } = useWorkspace();
   const [searchTerm, setSearchTerm] = useState('');
@@ -789,11 +793,11 @@ export function DocumentBrowser() {
     }
 
     return [...filteredDocuments].sort((a, b) => {
-      const aValue = getGroupLabel(getDocumentColumnText(a, groupByColumn));
-      const bValue = getGroupLabel(getDocumentColumnText(b, groupByColumn));
+      const aValue = getGroupLabel(getDocumentColumnText(a, groupByColumn), t('documentBrowser.unassigned'));
+      const bValue = getGroupLabel(getDocumentColumnText(b, groupByColumn), t('documentBrowser.unassigned'));
       return aValue.localeCompare(bValue);
     });
-  }, [filteredDocuments, groupByColumn]);
+  }, [filteredDocuments, groupByColumn, t]);
   const displayedDocuments = orderedDocuments.slice(0, displayedCount);
   const groupedSections = useMemo<GroupedDocumentSection[]>(() => {
     if (!groupByColumn) {
@@ -803,7 +807,7 @@ export function DocumentBrowser() {
     const sectionMap = new Map<string, GroupedDocumentSection>();
 
     displayedDocuments.forEach((document) => {
-      const label = getGroupLabel(getDocumentColumnText(document, groupByColumn));
+      const label = getGroupLabel(getDocumentColumnText(document, groupByColumn), t('documentBrowser.unassigned'));
       const key = `${groupByColumn}:${label}`;
       const existingSection = sectionMap.get(key);
 
@@ -820,7 +824,7 @@ export function DocumentBrowser() {
     });
 
     return Array.from(sectionMap.values());
-  }, [displayedDocuments, groupByColumn]);
+  }, [displayedDocuments, groupByColumn, t]);
   const hasMore = displayedCount < orderedDocuments.length;
   const hasActiveFilters = selectedStatus.length > 0 || selectedDocType.length > 0 || selectedProject.length > 0 || selectedCategories.length > 0 || Boolean(searchTerm);
   const allDisplayedSelected =
@@ -902,7 +906,7 @@ export function DocumentBrowser() {
               toggleDocumentSelection(doc.id);
             }}
             checked={isSelected}
-            ariaLabel={isSelected ? `Deselect ${doc.id}` : `Select ${doc.id}`}
+            ariaLabel={isSelected ? t('documentBrowser.deselectDocument', { id: doc.id }) : t('documentBrowser.selectDocument', { id: doc.id })}
             className={!isSelected ? 'opacity-0 group-hover:opacity-100' : ''}
           />
         </td>
@@ -990,7 +994,7 @@ export function DocumentBrowser() {
               className={`w-7 h-7 rounded-md inline-flex items-center justify-center text-neutral-600 hover:bg-neutral-200 transition-colors ${
                 openActionMenuId === doc.id ? 'opacity-100 bg-neutral-100' : 'opacity-0 group-hover:opacity-100 focus:opacity-100'
               }`}
-              aria-label={`Actions for ${doc.id}`}
+              aria-label={t('documentBrowser.actionsFor', { id: doc.id })}
             >
               <MoreHorizontalIcon size={14} />
             </button>
@@ -1000,8 +1004,8 @@ export function DocumentBrowser() {
                 e.stopPropagation();
                 navigate(`/chat?ask=${encodeURIComponent(`${doc.id} — ${doc.title}`)}&askKind=document`);
               }}
-              title={`Ask Flint about ${doc.id}`}
-              aria-label={`Ask Flint about ${doc.id}`}
+              title={t('documentBrowser.askFlintAbout', { id: doc.id })}
+              aria-label={t('documentBrowser.askFlintAbout', { id: doc.id })}
               className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity w-7 h-7 rounded-md inline-flex items-center justify-center text-[#0461BA] hover:bg-[#E8F1FB]"
             >
               <SparklesIcon size={14} />
@@ -1016,8 +1020,8 @@ export function DocumentBrowser() {
                   addToClipboard(doc);
                 }
               }}
-              title={isInClipboard(doc.id) ? `Remove ${doc.id} from clipboard` : `Add ${doc.id} to clipboard`}
-              aria-label={isInClipboard(doc.id) ? `Remove ${doc.id} from clipboard` : `Add ${doc.id} to clipboard`}
+              title={isInClipboard(doc.id) ? t('documentBrowser.removeFromClipboard', { id: doc.id }) : t('documentBrowser.addToClipboard', { id: doc.id })}
+              aria-label={isInClipboard(doc.id) ? t('documentBrowser.removeFromClipboard', { id: doc.id }) : t('documentBrowser.addToClipboard', { id: doc.id })}
               className={`opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all w-7 h-7 rounded-md inline-flex items-center justify-center ${
                 isInClipboard(doc.id)
                   ? 'bg-neutral-100 text-neutral-700 opacity-100'
@@ -1035,15 +1039,15 @@ export function DocumentBrowser() {
               <div className="py-1.5 overflow-visible flex flex-col">
                 {DOCUMENT_ACTIONS.map((item) => (
                   <div
-                    key={item.label}
+                    key={item.labelKey}
                     className={`relative ${item.dividerAbove ? 'border-t border-neutral-200 mt-1 pt-1' : ''}`}
                   >
                     <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        if (item.submenu) {
-                          const submenuKey = `${doc.id}:${item.label}`;
+                        if (item.submenuKeys) {
+                          const submenuKey = `${doc.id}:${item.labelKey}`;
                           setOpenActionSubmenuKey((prev) => prev === submenuKey ? null : submenuKey);
                           return;
                         }
@@ -1055,16 +1059,16 @@ export function DocumentBrowser() {
                           ? 'text-red-600 hover:bg-red-50'
                           : 'text-neutral-700 hover:bg-neutral-50'
                       }`}
-                      aria-expanded={item.submenu ? openActionSubmenuKey === `${doc.id}:${item.label}` : undefined}
+                      aria-expanded={item.submenuKeys ? openActionSubmenuKey === `${doc.id}:${item.labelKey}` : undefined}
                     >
-                      <span>{item.label}</span>
-                      {item.submenu && <ChevronRightIcon size={14} className="text-neutral-400" />}
+                      <span>{t(item.labelKey)}</span>
+                      {item.submenuKeys && <ChevronRightIcon size={14} className="text-neutral-400" />}
                     </button>
-                    {item.submenu && openActionSubmenuKey === `${doc.id}:${item.label}` && (
+                    {item.submenuKeys && openActionSubmenuKey === `${doc.id}:${item.labelKey}` && (
                       <div className="absolute left-full top-0 ml-1.5 w-60 bg-white border border-neutral-200 rounded-xl shadow-xl py-1.5 z-50 flex flex-col">
-                        {item.submenu.map((sub) => (
+                        {item.submenuKeys.map((subKey) => (
                           <button
-                            key={`${item.label}-${sub}`}
+                            key={`${item.labelKey}-${subKey}`}
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1073,7 +1077,7 @@ export function DocumentBrowser() {
                             }}
                             className="w-full text-left px-3.5 py-1.5 text-[15px] leading-5 text-neutral-700 hover:bg-neutral-50 transition-colors"
                           >
-                            {sub}
+                            {t(subKey)}
                           </button>
                         ))}
                       </div>
@@ -1092,59 +1096,59 @@ export function DocumentBrowser() {
   // Category-specific custom columns
   const CATEGORY_CUSTOM_COLUMNS: Record<string, { key: string; label: string }[]> = {
     Structural: [
-      { key: 'beamSize', label: 'Beam Size' },
-      { key: 'materialGrade', label: 'Material Grade' },
-      { key: 'loadRating', label: 'Load Rating' },
-      { key: 'connectionType', label: 'Connection Type' },
+      { key: 'beamSize', label: t('documentBrowser.columns.beamSize') },
+      { key: 'materialGrade', label: t('documentBrowser.columns.materialGrade') },
+      { key: 'loadRating', label: t('documentBrowser.columns.loadRating') },
+      { key: 'connectionType', label: t('documentBrowser.columns.connectionType') },
     ],
     Electrical: [
-      { key: 'voltage', label: 'Voltage' },
-      { key: 'circuitNumber', label: 'Circuit Number' },
-      { key: 'panel', label: 'Panel' },
-      { key: 'protectionType', label: 'Protection Type' },
+      { key: 'voltage', label: t('documentBrowser.columns.voltage') },
+      { key: 'circuitNumber', label: t('documentBrowser.columns.circuitNumber') },
+      { key: 'panel', label: t('documentBrowser.columns.panel') },
+      { key: 'protectionType', label: t('documentBrowser.columns.protectionType') },
     ],
     Mechanical: [
-      { key: 'equipmentTag', label: 'Equipment Tag' },
-      { key: 'powerRating', label: 'Power Rating' },
-      { key: 'manufacturer', label: 'Manufacturer' },
-      { key: 'serviceMedium', label: 'Service Medium' },
+      { key: 'equipmentTag', label: t('documentBrowser.columns.equipmentTag') },
+      { key: 'powerRating', label: t('documentBrowser.columns.powerRating') },
+      { key: 'manufacturer', label: t('documentBrowser.columns.manufacturer') },
+      { key: 'serviceMedium', label: t('documentBrowser.columns.serviceMedium') },
     ],
     Civil: [
-      { key: 'concreteType', label: 'Concrete Type' },
-      { key: 'rebarSize', label: 'Rebar Size' },
-      { key: 'soilClass', label: 'Soil Class' },
-      { key: 'foundationType', label: 'Foundation Type' },
+      { key: 'concreteType', label: t('documentBrowser.columns.concreteType') },
+      { key: 'rebarSize', label: t('documentBrowser.columns.rebarSize') },
+      { key: 'soilClass', label: t('documentBrowser.columns.soilClass') },
+      { key: 'foundationType', label: t('documentBrowser.columns.foundationType') },
     ],
     Architectural: [
-      { key: 'finishType', label: 'Finish Type' },
-      { key: 'roomNumber', label: 'Room Number' },
-      { key: 'ceilingHeight', label: 'Ceiling Height' },
-      { key: 'fireRating', label: 'Fire Rating' },
+      { key: 'finishType', label: t('documentBrowser.columns.finishType') },
+      { key: 'roomNumber', label: t('documentBrowser.columns.roomNumber') },
+      { key: 'ceilingHeight', label: t('documentBrowser.columns.ceilingHeight') },
+      { key: 'fireRating', label: t('documentBrowser.columns.fireRating') },
     ],
     Plumbing: [
-      { key: 'pipeSize', label: 'Pipe Size' },
-      { key: 'fixtureType', label: 'Fixture Type' },
-      { key: 'flowRate', label: 'Flow Rate' },
-      { key: 'pressureClass', label: 'Pressure Class' },
+      { key: 'pipeSize', label: t('documentBrowser.columns.pipeSize') },
+      { key: 'fixtureType', label: t('documentBrowser.columns.fixtureType') },
+      { key: 'flowRate', label: t('documentBrowser.columns.flowRate') },
+      { key: 'pressureClass', label: t('documentBrowser.columns.pressureClass') },
     ],
     HVAC: [
-      { key: 'ductSize', label: 'Duct Size' },
-      { key: 'airflow', label: 'Airflow' },
-      { key: 'unitType', label: 'Unit Type' },
-      { key: 'zone', label: 'Zone' },
+      { key: 'ductSize', label: t('documentBrowser.columns.ductSize') },
+      { key: 'airflow', label: t('documentBrowser.columns.airflow') },
+      { key: 'unitType', label: t('documentBrowser.columns.unitType') },
+      { key: 'zone', label: t('documentBrowser.columns.zone') },
     ],
   };
 
   // Compose all columns: base + custom for selected categories
   const customColumns = selectedCategories.length === 1 ? CATEGORY_CUSTOM_COLUMNS[selectedCategories[0]] || [] : [];
   const allColumns = [
-    { key: 'id', label: 'Reference' },
-    { key: 'title', label: 'Title' },
-    { key: 'revisionNumber', label: 'Rev' },
-    { key: 'status', label: 'Status' },
-    { key: 'documentType', label: 'Type' },
-    { key: 'author', label: 'Author' },
-    { key: 'dateModified', label: 'Date Modified' },
+    { key: 'id', label: t('documentBrowser.columns.reference') },
+    { key: 'title', label: t('documentBrowser.columns.title') },
+    { key: 'revisionNumber', label: t('documentBrowser.columns.rev') },
+    { key: 'status', label: t('documentBrowser.columns.status') },
+    { key: 'documentType', label: t('documentBrowser.columns.type') },
+    { key: 'author', label: t('documentBrowser.columns.author') },
+    { key: 'dateModified', label: t('documentBrowser.columns.dateModified') },
     ...customColumns
   ];
   const allColumnKeys = allColumns.map((column) => column.key).join('|');
