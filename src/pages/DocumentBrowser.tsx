@@ -771,38 +771,126 @@ export function DocumentBrowser() {
     setSearchTerm('');
     setTimeout(() => setHighlightedDocId(null), 5000);
   };
-  const columns: {
-    key: ColumnKey;
-    label: string;
-  }[] = [
-  {
-    key: 'id',
-    label: 'Reference'
-  },
-  {
-    key: 'title',
-    label: 'Title'
-  },
-  {
-    key: 'revisionNumber',
-    label: 'Rev'
-  },
-  {
-    key: 'status',
-    label: 'Status'
-  },
-  {
-    key: 'documentType',
-    label: 'Type'
-  },
-  {
-    key: 'author',
-    label: 'Author'
-  },
-  {
-    key: 'dateModified',
-    label: 'Date Modified'
-  }];
+
+  // Column definitions
+  // Category-specific custom columns
+  const CATEGORY_CUSTOM_COLUMNS: Record<string, { key: string; label: string }[]> = {
+    Structural: [
+      { key: 'beamSize', label: 'Beam Size' },
+      { key: 'materialGrade', label: 'Material Grade' },
+      { key: 'loadRating', label: 'Load Rating' },
+    ],
+    Electrical: [
+      { key: 'voltage', label: 'Voltage' },
+      { key: 'circuitNumber', label: 'Circuit Number' },
+      { key: 'panel', label: 'Panel' },
+    ],
+    Mechanical: [
+      { key: 'equipmentTag', label: 'Equipment Tag' },
+      { key: 'powerRating', label: 'Power Rating' },
+      { key: 'manufacturer', label: 'Manufacturer' },
+    ],
+    Civil: [
+      { key: 'concreteType', label: 'Concrete Type' },
+      { key: 'rebarSize', label: 'Rebar Size' },
+      { key: 'soilClass', label: 'Soil Class' },
+    ],
+    Architectural: [
+      { key: 'finishType', label: 'Finish Type' },
+      { key: 'roomNumber', label: 'Room Number' },
+      { key: 'ceilingHeight', label: 'Ceiling Height' },
+    ],
+    Plumbing: [
+      { key: 'pipeSize', label: 'Pipe Size' },
+      { key: 'fixtureType', label: 'Fixture Type' },
+      { key: 'flowRate', label: 'Flow Rate' },
+    ],
+    HVAC: [
+      { key: 'ductSize', label: 'Duct Size' },
+      { key: 'airflow', label: 'Airflow' },
+      { key: 'unitType', label: 'Unit Type' },
+    ],
+  };
+
+  // Get selected categories from filter panel state (sync with FilterPanel if needed)
+  // For now, try to infer from filteredDocuments or selectedCategory state if available
+  // If not available, default to no custom columns
+  // TODO: If selectedCategories is lifted to DocumentBrowser, use that directly
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // TODO: sync with FilterPanel
+  // For demo, try to infer from filteredDocuments (if all docs have a tag matching a category)
+  useEffect(() => {
+    // Try to infer selected category if all filtered docs share a tag
+    if (filteredDocuments.length > 0) {
+      const allTags = filteredDocuments.flatMap(doc => doc.tags || []);
+      const category = Object.keys(CATEGORY_CUSTOM_COLUMNS).find(cat => allTags.every(tag => tag.toLowerCase().includes(cat.toLowerCase())));
+      if (category) setSelectedCategories([category]);
+      else setSelectedCategories([]);
+    } else {
+      setSelectedCategories([]);
+    }
+  }, [filteredDocuments]);
+
+  // Compose all columns: base + custom for selected categories
+  const customColumns = selectedCategories.flatMap(cat => CATEGORY_CUSTOM_COLUMNS[cat] || []);
+  const allColumns = [
+    { key: 'id', label: 'Reference' },
+    { key: 'title', label: 'Title' },
+    { key: 'revisionNumber', label: 'Rev' },
+    { key: 'status', label: 'Status' },
+    { key: 'documentType', label: 'Type' },
+    { key: 'author', label: 'Author' },
+    { key: 'dateModified', label: 'Date Modified' },
+    ...customColumns
+  ];
+
+  // State for column order
+  // Track all column keys (including custom)
+  const [columnOrder, setColumnOrder] = useState<string[]>(allColumns.map(c => c.key));
+  // Column visibility state
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(allColumns.map(c => c.key));
+  // Update order/visibility if columns change (e.g., category changes)
+  useEffect(() => {
+    setColumnOrder((prev) => {
+      // Add new columns at the end if not present
+      const newKeys = allColumns.map(c => c.key);
+      return [...prev.filter(k => newKeys.includes(k)), ...newKeys.filter(k => !prev.includes(k))];
+    });
+    setVisibleColumns((prev) => {
+      const newKeys = allColumns.map(c => c.key);
+      return [...prev.filter(k => newKeys.includes(k)), ...newKeys.filter(k => !prev.includes(k))];
+    });
+  }, [allColumns.length]);
+  const columns = columnOrder
+    .map(key => allColumns.find(c => c.key === key))
+    .filter(col => col && visibleColumns.includes(col.key)) as { key: string; label: string }[];
+
+  // Column chooser dropdown state
+  const [showColumnChooser, setShowColumnChooser] = useState(false);
+
+  // Drag-and-drop state
+  const [draggedCol, setDraggedCol] = useState<ColumnKey | null>(null);
+
+  const handleDragStart = (key: ColumnKey) => {
+    setDraggedCol(key);
+  };
+
+  const handleDragOver = (e: React.DragEvent, overKey: ColumnKey) => {
+    e.preventDefault();
+    if (draggedCol && draggedCol !== overKey) {
+      const oldIndex = columnOrder.indexOf(draggedCol);
+      const newIndex = columnOrder.indexOf(overKey);
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        const newOrder = [...columnOrder];
+        newOrder.splice(oldIndex, 1);
+        newOrder.splice(newIndex, 0, draggedCol);
+        setColumnOrder(newOrder);
+      }
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedCol(null);
+  };
 
   return (
     <div
@@ -984,9 +1072,8 @@ export function DocumentBrowser() {
                   <div />
                 )}
                 <div className="flex items-center gap-3">
-                  <div
-                    className="relative"
-                  >
+                  {/* Clipboard button */}
+                  <div className="relative">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1003,7 +1090,6 @@ export function DocumentBrowser() {
                         </span>
                       )}
                     </button>
-
                     {showClipboardDropdown && (
                       <div className="absolute right-0 top-full mt-1.5 w-72 bg-white border border-neutral-200 rounded-md shadow-lg z-40">
                         <div className="px-3 py-2 border-b border-neutral-100 flex items-center justify-between gap-2">
@@ -1047,10 +1133,52 @@ export function DocumentBrowser() {
                       </div>
                     )}
                   </div>
-
+                  {/* View mode dropdown */}
                   <ViewModeDropdown
                     viewMode={viewMode}
                     onViewModeChange={setViewMode} />
+                  {/* Column chooser button (three dots) */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowColumnChooser((v) => !v)}
+                      className="h-7 w-7 rounded-md border border-neutral-200 bg-white text-neutral-600 hover:text-neutral-800 hover:bg-neutral-50 transition-colors inline-flex items-center justify-center"
+                      aria-label="Choose columns"
+                      aria-haspopup="true"
+                      aria-expanded={showColumnChooser}
+                    >
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/></svg>
+                    </button>
+                    {showColumnChooser && (
+                      <div className="absolute right-0 top-full mt-1.5 w-56 bg-white border border-neutral-200 rounded-lg shadow-lg z-50 p-3">
+                        <div className="mb-2 text-xs font-semibold text-neutral-700">Show Columns</div>
+                        <div className="flex flex-col gap-2">
+                          {allColumns.map(col => (
+                            <label key={col.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={visibleColumns.includes(col.key)}
+                                onChange={() => {
+                                  setVisibleColumns(prev =>
+                                    prev.includes(col.key)
+                                      ? prev.filter(k => k !== col.key)
+                                      : [...prev, col.key]
+                                  );
+                                }}
+                                className="accent-[#0461BA]"
+                              />
+                              <span>{col.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <button
+                          className="mt-3 w-full py-1.5 rounded bg-[#0461BA] text-white text-xs font-semibold hover:bg-[#234d96] focus:outline-none focus:ring-2 focus:ring-[#0461BA]"
+                          onClick={() => setShowColumnChooser(false)}
+                        >
+                          Done
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </header>
 
@@ -1232,253 +1360,251 @@ export function DocumentBrowser() {
                                   />
                                 </button>
                               </th>
-                              <th
-                                key={columns[0].key}
-                                className={
-                                  viewMode === 'compact-table' ?
-                                  'text-left p-2' :
-                                  'text-left p-4'
-                                }
-                              >
-                                <ColumnHeaderDropdown
-                                  column={columns[0].key}
-                                  label={columns[0].label}
-                                  filter={columnFilters.get(columns[0].key)}
-                                  onFilterChange={handleColumnFilterChange}
-                                  onSortChange={handleColumnSortChange}
-                                  onClearFilter={handleClearColumnFilter}
-                                />
-                              </th>
-                              <th className={viewMode === 'compact-table' ? 'p-2 w-28' : 'p-4 w-32'} aria-label="Row actions" />
-                              {columns.slice(1).map((col) =>
-                          <th
-                            key={col.key}
-                            className={
-                            viewMode === 'compact-table' ?
-                            'text-left p-2' :
-                            'text-left p-4'
-                            }>
-                            
+                              {/* Table column headers restored */}
+                              {columns.map((col) => (
+                                <th
+                                  key={col.key}
+                                  draggable
+                                  onDragStart={() => handleDragStart(col.key)}
+                                  onDragOver={e => handleDragOver(e, col.key)}
+                                  onDragEnd={handleDragEnd}
+                                  className={
+                                    viewMode === 'compact-table' ?
+                                    'text-left p-2' :
+                                    'text-left p-4'
+                                  }
+                                  style={{ opacity: draggedCol === col.key ? 0.5 : 1, cursor: 'grab' }}
+                                >
                                   <ColumnHeaderDropdown
-                              column={col.key}
-                              label={col.label}
-                              filter={columnFilters.get(col.key)}
-                              onFilterChange={handleColumnFilterChange}
-                              onSortChange={handleColumnSortChange}
-                              onClearFilter={handleClearColumnFilter} />
-                            
+                                    column={col.key}
+                                    label={col.label}
+                                    filter={columnFilters.get(col.key)}
+                                    onFilterChange={handleColumnFilterChange}
+                                    onSortChange={handleColumnSortChange}
+                                    onClearFilter={handleClearColumnFilter}
+                                  />
                                 </th>
-                          )}
+                              ))}
+                              <th className={viewMode === 'compact-table' ? 'p-2 w-28' : 'p-4 w-32'} aria-label="Row actions" />
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-neutral-100">
-                            {displayedDocuments.map((doc) =>
-                        {
-                          const isSelected = selectedDocumentIds.has(doc.id);
-                          return (
-                        <tr
-                          key={doc.id}
-                          className={`transition-colors group ${isSelected || highlightedDocId === doc.id ? 'bg-[#E8F1FB]' : 'hover:bg-neutral-50'}`}>
-                          <td className={viewMode === 'compact-table' ? 'p-2' : 'p-4'}>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                toggleDocumentSelection(doc.id);
-                              }}
-                              className={`w-5 h-5 rounded border inline-flex items-center justify-center transition-colors ${
-                                isSelected
-                                  ? 'border-[#0461BA] bg-[#E8F1FB]'
-                                  : 'border-neutral-300 bg-white opacity-0 group-hover:opacity-100'
-                              }`}
-                              aria-label={isSelected ? `Deselect ${doc.id}` : `Select ${doc.id}`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                readOnly
-                                className="w-3.5 h-3.5 accent-[#0461BA] cursor-pointer"
-                              />
-                            </button>
-                          </td>
-                          
-                                <td
-                            className={
-                            viewMode === 'compact-table' ? 'p-2' : 'p-4'
-                            }>
-                            
-                                  <button
-                              onClick={() => setPanelData(toDocumentDetail(doc))}
-                              className="text-[#0461BA] hover:text-[#035299] font-medium text-left transition-colors">
-                              
-                                    {doc.id}
-                                  </button>
-                                </td>
-                                <td className={`${viewMode === 'compact-table' ? 'p-2' : 'p-4'} relative`}>
-                                  <div className="flex items-center gap-1">
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      setOpenActionMenuId((prev) => {
-                                        const next = prev === doc.id ? null : doc.id;
-                                        if (!next) {
-                                          setOpenActionSubmenuKey(null);
-                                        }
-                                        return next;
-                                      });
-                                      if (openActionMenuId !== doc.id) {
-                                        setOpenActionSubmenuKey(null);
-                                      }
-                                    }}
-                                    className={`w-7 h-7 rounded-md inline-flex items-center justify-center text-neutral-600 hover:bg-neutral-200 transition-colors ${
-                                      openActionMenuId === doc.id ? 'opacity-100 bg-neutral-100' : 'opacity-0 group-hover:opacity-100 focus:opacity-100'
-                                    }`}
-                                    aria-label={`Actions for ${doc.id}`}
-                                  >
-                                    <MoreHorizontalIcon size={14} />
-                                  </button>
-
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      navigate(`/chat?ask=${encodeURIComponent(`${doc.id} — ${doc.title}`)}&askKind=document`);
-                                    }}
-                                    title={`Ask Flint about ${doc.id}`}
-                                    aria-label={`Ask Flint about ${doc.id}`}
-                                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity w-7 h-7 rounded-md inline-flex items-center justify-center text-[#0461BA] hover:bg-[#E8F1FB]"
-                                  >
-                                    <SparklesIcon size={14} />
-                                  </button>
-
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      if (isInClipboard(doc.id)) {
-                                        removeFromClipboard(doc.id);
-                                      } else {
-                                        addToClipboard(doc);
-                                      }
-                                    }}
-                                    title={isInClipboard(doc.id) ? `Remove ${doc.id} from clipboard` : `Add ${doc.id} to clipboard`}
-                                    aria-label={isInClipboard(doc.id) ? `Remove ${doc.id} from clipboard` : `Add ${doc.id} to clipboard`}
-                                    className={`opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all w-7 h-7 rounded-md inline-flex items-center justify-center ${
-                                      isInClipboard(doc.id)
-                                        ? 'bg-neutral-100 text-neutral-700 opacity-100'
-                                        : 'text-neutral-600 hover:bg-neutral-200'
-                                    }`}
-                                  >
-                                    <ClipboardStackIcon size={14} active={isInClipboard(doc.id)} />
-                                  </button>
-                                  </div>
-
-                                  {openActionMenuId === doc.id && (
-                                    <div
-                                      ref={actionMenuRef}
-                                      className="absolute left-0 top-full mt-1.5 w-64 bg-white border border-neutral-200 rounded-xl shadow-xl z-40 overflow-visible"
+                            {displayedDocuments.map((doc) => {
+                              const isSelected = selectedDocumentIds.has(doc.id);
+                              return (
+                                <tr
+                                  key={doc.id}
+                                  className={`transition-colors group ${isSelected || highlightedDocId === doc.id ? 'bg-[#E8F1FB]' : 'hover:bg-neutral-50'}`}
+                                >
+                                  {/* Selection checkbox */}
+                                  <td className={viewMode === 'compact-table' ? 'p-2' : 'p-4'}>
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggleDocumentSelection(doc.id);
+                                      }}
+                                      className={`w-5 h-5 rounded border inline-flex items-center justify-center transition-colors ${
+                                        isSelected
+                                          ? 'border-[#0461BA] bg-[#E8F1FB]'
+                                          : 'border-neutral-300 bg-white opacity-0 group-hover:opacity-100'
+                                      }`}
+                                      aria-label={isSelected ? `Deselect ${doc.id}` : `Select ${doc.id}`}
                                     >
-                                      <div className="py-1.5 overflow-visible flex flex-col">
-                                        {DOCUMENT_ACTIONS.map((item) => (
-                                          <div
-                                            key={item.label}
-                                            className={`relative ${item.dividerAbove ? 'border-t border-neutral-200 mt-1 pt-1' : ''}`}
-                                          >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        readOnly
+                                        className="w-3.5 h-3.5 accent-[#0461BA] cursor-pointer"
+                                      />
+                                    </button>
+                                  </td>
+                                  {/* Data columns rendered in current order */}
+                                  {columns.map((col) => {
+                                    // Standard columns
+                                    switch (col.key) {
+                                      case 'id':
+                                        return (
+                                          <td key={col.key} className={viewMode === 'compact-table' ? 'p-2' : 'p-4'}>
                                             <button
-                                              onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                if (item.submenu) {
-                                                  const submenuKey = `${doc.id}:${item.label}`;
-                                                  setOpenActionSubmenuKey((prev) => prev === submenuKey ? null : submenuKey);
-                                                  return;
-                                                }
-                                                setOpenActionMenuId(null);
-                                                setOpenActionSubmenuKey(null);
-                                              }}
-                                              className={`w-full text-left px-3.5 py-1.5 text-[15px] leading-5 transition-colors flex items-center justify-between gap-2 ${
-                                                item.danger
-                                                  ? 'text-red-600 hover:bg-red-50'
-                                                  : 'text-neutral-700 hover:bg-neutral-50'
-                                              }`}
-                                              aria-expanded={item.submenu ? openActionSubmenuKey === `${doc.id}:${item.label}` : undefined}
+                                              onClick={() => setPanelData(toDocumentDetail(doc))}
+                                              className="text-[#0461BA] hover:text-[#035299] font-medium text-left transition-colors"
                                             >
-                                              <span>{item.label}</span>
-                                              {item.submenu && <ChevronRightIcon size={14} className="text-neutral-400" />}
+                                              {doc.id}
                                             </button>
-
-                                            {item.submenu && openActionSubmenuKey === `${doc.id}:${item.label}` && (
-                                              <div className="absolute left-full top-0 ml-1.5 w-60 bg-white border border-neutral-200 rounded-xl shadow-xl py-1.5 z-50 flex flex-col">
-                                                {item.submenu.map((sub) => (
-                                                  <button
-                                                    key={`${item.label}-${sub}`}
-                                                    onClick={(e) => {
-                                                      e.preventDefault();
-                                                      e.stopPropagation();
-                                                      setOpenActionMenuId(null);
-                                                      setOpenActionSubmenuKey(null);
-                                                    }}
-                                                    className="w-full text-left px-3.5 py-1.5 text-[15px] leading-5 text-neutral-700 hover:bg-neutral-50 transition-colors"
-                                                  >
-                                                    {sub}
-                                                  </button>
-                                                ))}
-                                              </div>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </div>
+                                          </td>
+                                        );
+                                      case 'title':
+                                        return (
+                                          <td key={col.key} className={viewMode === 'compact-table' ? 'p-2' : 'p-4'}>
+                                            <button
+                                              onClick={() => setPanelData(toDocumentDetail(doc))}
+                                              className="text-neutral-900 group-hover:text-[#0461BA] transition-colors font-medium text-left"
+                                            >
+                                              {doc.title}
+                                            </button>
+                                          </td>
+                                        );
+                                      case 'revisionNumber':
+                                        return (
+                                          <td key={col.key} className={viewMode === 'compact-table' ? 'p-2' : 'p-4 text-neutral-500 font-medium'}>
+                                            {doc.revisionNumber}
+                                          </td>
+                                        );
+                                      case 'status':
+                                        return (
+                                          <td key={col.key} className={viewMode === 'compact-table' ? 'p-2' : 'p-4'}>
+                                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${statusColors[doc.status]}`}>
+                                              {doc.status}
+                                            </span>
+                                          </td>
+                                        );
+                                      case 'documentType':
+                                        return (
+                                          <td key={col.key} className={viewMode === 'compact-table' ? 'p-2' : 'p-4 text-neutral-600'}>
+                                            {doc.documentType}
+                                          </td>
+                                        );
+                                      case 'author':
+                                        return (
+                                          <td key={col.key} className={viewMode === 'compact-table' ? 'p-2' : 'p-4 text-neutral-600'}>
+                                            {doc.author}
+                                          </td>
+                                        );
+                                      case 'dateModified':
+                                        return (
+                                          <td key={col.key} className={viewMode === 'compact-table' ? 'p-2' : 'p-4 text-neutral-600'}>
+                                            {doc.dateModified}
+                                          </td>
+                                        );
+                                      default:
+                                        // Custom columns: show random or placeholder data
+                                        return (
+                                          <td key={col.key} className={viewMode === 'compact-table' ? 'p-2' : 'p-4 text-neutral-500'}>
+                                            {/* For demo, show a random value or placeholder */}
+                                            {doc[col.key] || '--'}
+                                          </td>
+                                        );
+                                    }
+                                  })}
+                                  {/* Row actions */}
+                                  <td className={viewMode === 'compact-table' ? 'p-2 w-28' : 'p-4 w-32'}>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setOpenActionMenuId((prev) => {
+                                            const next = prev === doc.id ? null : doc.id;
+                                            if (!next) {
+                                              setOpenActionSubmenuKey(null);
+                                            }
+                                            return next;
+                                          });
+                                          if (openActionMenuId !== doc.id) {
+                                            setOpenActionSubmenuKey(null);
+                                          }
+                                        }}
+                                        className={`w-7 h-7 rounded-md inline-flex items-center justify-center text-neutral-600 hover:bg-neutral-200 transition-colors ${
+                                          openActionMenuId === doc.id ? 'opacity-100 bg-neutral-100' : 'opacity-0 group-hover:opacity-100 focus:opacity-100'
+                                        }`}
+                                        aria-label={`Actions for ${doc.id}`}
+                                      >
+                                        <MoreHorizontalIcon size={14} />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          navigate(`/chat?ask=${encodeURIComponent(`${doc.id} — ${doc.title}`)}&askKind=document`);
+                                        }}
+                                        title={`Ask Flint about ${doc.id}`}
+                                        aria-label={`Ask Flint about ${doc.id}`}
+                                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity w-7 h-7 rounded-md inline-flex items-center justify-center text-[#0461BA] hover:bg-[#E8F1FB]"
+                                      >
+                                        <SparklesIcon size={14} />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          if (isInClipboard(doc.id)) {
+                                            removeFromClipboard(doc.id);
+                                          } else {
+                                            addToClipboard(doc);
+                                          }
+                                        }}
+                                        title={isInClipboard(doc.id) ? `Remove ${doc.id} from clipboard` : `Add ${doc.id} to clipboard`}
+                                        aria-label={isInClipboard(doc.id) ? `Remove ${doc.id} from clipboard` : `Add ${doc.id} to clipboard`}
+                                        className={`opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all w-7 h-7 rounded-md inline-flex items-center justify-center ${
+                                          isInClipboard(doc.id)
+                                            ? 'bg-neutral-100 text-neutral-700 opacity-100'
+                                            : 'text-neutral-600 hover:bg-neutral-200'
+                                        }`}
+                                      >
+                                        <ClipboardStackIcon size={14} active={isInClipboard(doc.id)} />
+                                      </button>
                                     </div>
-                                  )}
-                                </td>
-                                <td
-                            className={
-                            viewMode === 'compact-table' ? 'p-2' : 'p-4'
-                            }>
-                            
-                                  <button
-                              onClick={() => setPanelData(toDocumentDetail(doc))}
-                              className="text-neutral-900 group-hover:text-[#0461BA] transition-colors font-medium text-left">
-                              
-                                    {doc.title}
-                                  </button>
-                                </td>
-                                <td
-                            className={`${viewMode === 'compact-table' ? 'p-2' : 'p-4'} text-neutral-500 font-medium`}>
-                            
-                                  {doc.revisionNumber}
-                                </td>
-                                <td
-                            className={
-                            viewMode === 'compact-table' ? 'p-2' : 'p-4'
-                            }>
-                            
-                                  <span
-                              className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${statusColors[doc.status]}`}>
-                              
-                                    {doc.status}
-                                  </span>
-                                </td>
-                                <td
-                            className={`${viewMode === 'compact-table' ? 'p-2' : 'p-4'} text-neutral-600`}>
-                            
-                                  {doc.documentType}
-                                </td>
-                                <td
-                            className={`${viewMode === 'compact-table' ? 'p-2' : 'p-4'} text-neutral-600`}>
-                            
-                                  {doc.author}
-                                </td>
-                                <td
-                            className={`${viewMode === 'compact-table' ? 'p-2' : 'p-4'} text-neutral-600`}>
-                            
-                                  {doc.dateModified}
-                                </td>
-                              </tr>
-                        );
-                        }
-                        )}
+                                    {openActionMenuId === doc.id && (
+                                      <div
+                                        ref={actionMenuRef}
+                                        className="absolute left-0 top-full mt-1.5 w-64 bg-white border border-neutral-200 rounded-xl shadow-xl z-40 overflow-visible"
+                                      >
+                                        <div className="py-1.5 overflow-visible flex flex-col">
+                                          {DOCUMENT_ACTIONS.map((item) => (
+                                            <div
+                                              key={item.label}
+                                              className={`relative ${item.dividerAbove ? 'border-t border-neutral-200 mt-1 pt-1' : ''}`}
+                                            >
+                                              <button
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  e.stopPropagation();
+                                                  if (item.submenu) {
+                                                    const submenuKey = `${doc.id}:${item.label}`;
+                                                    setOpenActionSubmenuKey((prev) => prev === submenuKey ? null : submenuKey);
+                                                    return;
+                                                  }
+                                                  setOpenActionMenuId(null);
+                                                  setOpenActionSubmenuKey(null);
+                                                }}
+                                                className={`w-full text-left px-3.5 py-1.5 text-[15px] leading-5 transition-colors flex items-center justify-between gap-2 ${
+                                                  item.danger
+                                                    ? 'text-red-600 hover:bg-red-50'
+                                                    : 'text-neutral-700 hover:bg-neutral-50'
+                                                }`}
+                                                aria-expanded={item.submenu ? openActionSubmenuKey === `${doc.id}:${item.label}` : undefined}
+                                              >
+                                                <span>{item.label}</span>
+                                                {item.submenu && <ChevronRightIcon size={14} className="text-neutral-400" />}
+                                              </button>
+                                              {item.submenu && openActionSubmenuKey === `${doc.id}:${item.label}` && (
+                                                <div className="absolute left-full top-0 ml-1.5 w-60 bg-white border border-neutral-200 rounded-xl shadow-xl py-1.5 z-50 flex flex-col">
+                                                  {item.submenu.map((sub) => (
+                                                    <button
+                                                      key={`${item.label}-${sub}`}
+                                                      onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setOpenActionMenuId(null);
+                                                        setOpenActionSubmenuKey(null);
+                                                      }}
+                                                      className="w-full text-left px-3.5 py-1.5 text-[15px] leading-5 text-neutral-700 hover:bg-neutral-50 transition-colors"
+                                                    >
+                                                      {sub}
+                                                    </button>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
