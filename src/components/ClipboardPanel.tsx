@@ -77,7 +77,7 @@ export function ClipboardPanel({ isOpen, onClose, onSelect }: ClipboardPanelProp
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-md flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                className="w-8 h-8 rounded-md flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 transition-colors"
                 aria-label="Close"
               >
                 <XIcon size={16} />
@@ -101,7 +101,7 @@ export function ClipboardPanel({ isOpen, onClose, onSelect }: ClipboardPanelProp
                   {/* Select All */}
                   <button
                     onClick={toggleSelectAll}
-                    className="w-full text-left flex items-center gap-3 py-3 mb-3 rounded-lg hover:bg-neutral-50 transition-colors"
+                    className="w-full text-left flex items-center gap-3 py-3 mb-3 rounded-lg hover:bg-[#F0F4F8] transition-colors"
                   >
                     <div
                       className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
@@ -129,7 +129,7 @@ export function ClipboardPanel({ isOpen, onClose, onSelect }: ClipboardPanelProp
                       <button
                         key={doc.id}
                         onClick={() => toggleSelect(doc.id)}
-                        className="w-full text-left flex items-start gap-3 py-3 rounded-lg hover:bg-neutral-50 transition-colors"
+                        className="w-full text-left flex items-start gap-3 py-3 rounded-lg hover:bg-[#F0F4F8] transition-colors"
                       >
                         <div
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
@@ -185,7 +185,7 @@ export function ClipboardPanel({ isOpen, onClose, onSelect }: ClipboardPanelProp
                   <div className="flex-1" />
                   <button
                     onClick={onClose}
-                    className="text-sm px-3 py-1.5 rounded-lg text-neutral-700 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                    className="text-sm px-3 py-1.5 rounded-lg text-neutral-700 border border-neutral-200 hover:bg-[#F0F4F8] transition-colors"
                   >
                     Cancel
                   </button>
@@ -209,3 +209,4 @@ export function ClipboardPanel({ isOpen, onClose, onSelect }: ClipboardPanelProp
     </AnimatePresence>
   );
 }
+

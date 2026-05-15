@@ -1,20 +1,14 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboardIcon,
-  FolderKanbanIcon,
   MessageCircleIcon,
   SettingsIcon,
-  UserIcon,
   PackageIcon,
-  GitBranchIcon,
-  SendIcon,
-  BarChart3Icon,
-  ShieldIcon,
   FolderIcon } from
 'lucide-react';
 import { ColorCustomizer } from './ColorCustomizer';
+import { useShellLayout } from '../contexts/ShellLayoutContext';
 interface LeftRailProps {
   activeItem: string;
   onItemClick: (item: string) => void;
@@ -33,13 +27,14 @@ export function LeftRail({
 }: LeftRailProps) {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [showColorCustomizer, setShowColorCustomizer] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  const { isLeftRailVisible } = useShellLayout();
   const navigate = useNavigate();
+
   const navItems: NavItem[] = [
   {
     id: 'dashboard',
     icon: LayoutDashboardIcon,
-    label: 'Dashboard',
+    label: 'Home',
     onClick: () => navigate('/')
   },
   {
@@ -53,31 +48,6 @@ export function LeftRail({
     icon: PackageIcon,
     label: 'Packages',
     onClick: () => navigate('/packages')
-  },
-  {
-    id: 'workflows',
-    icon: GitBranchIcon,
-    label: 'Workflows'
-  },
-  {
-    id: 'transmittals',
-    icon: SendIcon,
-    label: 'Transmittals'
-  },
-  {
-    id: 'reports',
-    icon: BarChart3Icon,
-    label: 'Reports'
-  },
-  {
-    id: 'admin',
-    icon: ShieldIcon,
-    label: 'Admin'
-  },
-  {
-    id: 'projects',
-    icon: FolderKanbanIcon,
-    label: 'Projects'
   },
   {
     id: 'chat',
@@ -94,6 +64,11 @@ export function LeftRail({
   }];
 
   const allItems = [...navItems, ...bottomItems];
+
+  if (!isLeftRailVisible) {
+    return null;
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -129,80 +104,47 @@ export function LeftRail({
         }}
         onFocus={() => setFocusedIndex(index)}
         className={`
-          relative w-full flex items-center p-2 rounded-md transition-colors duration-200
-          ${isActive || isSettings && showColorCustomizer ? 'text-[#0461BA] bg-[#E8F1FB]' : 'text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50'}
+          relative w-full flex flex-col items-center justify-center gap-1 px-1 py-2 rounded-md transition-colors duration-200
+          ${isActive || isSettings && showColorCustomizer ? 'text-[#0461BA] bg-[#E8F1FB]' : 'text-neutral-500 hover:text-neutral-700 hover:bg-[#F0F4F8]'}
           ${isFocused ? 'ring-2 ring-[#0461BA] ring-offset-1' : ''}
         `}
         aria-current={isActive ? 'page' : undefined}
-        style={{ justifyContent: isHovered ? 'flex-start' : 'center' }}
       >
         {isActive &&
-          <motion.div
-            layoutId="activeIndicator"
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 bg-[#0461BA] rounded-r-full"
-            transition={{
-              duration: 0.18,
-              ease: 'easeOut'
-            }} />
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-[#0461BA] rounded-r-full" />
         }
         <Icon
-          size={18}
+          size={17}
           className={`flex-shrink-0 ${isActive || isSettings && showColorCustomizer ? 'stroke-[2.5px]' : 'stroke-[1.5px]'}`} />
-        {isHovered && (
-          <span className="ml-3 text-sm font-medium whitespace-nowrap opacity-100 transition-opacity duration-200">
-            {item.label}
-          </span>
-        )}
+        <span className="text-[11px] leading-none font-medium text-center w-full truncate px-1">
+          {item.label}
+        </span>
       </button>
     );
 
   };
   return (
     <>
-      {/* Dim backdrop when rail expanded */}
-      <motion.div
-        initial={false}
-        animate={{ opacity: isHovered ? 1 : 0 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
-        className="fixed inset-x-0 top-6 bottom-0 bg-black/20 z-10 pointer-events-none" />
-
-      <motion.nav
-        initial={false}
-        animate={{
-          width: isHovered ? 160 : 44
-        }}
-        transition={{
-          duration: 0.18,
-          ease: 'easeOut'
-        }}
+      <nav
         onKeyDown={handleKeyDown}
-        className="fixed left-0 top-6 h-[calc(100vh-24px)] bg-white border-r border-neutral-200 z-20 flex flex-col py-2 overflow-visible"
+        className="fixed left-0 top-[45px] h-[calc(100vh-45px)] bg-white border-r border-neutral-200 z-20 flex flex-col py-2 overflow-hidden"
+        style={{ width: 88 }}
         role="navigation"
         aria-label="Main navigation"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Profile Avatar */}
-        <div className="px-1 mb-3">
-          <button
-            onClick={() => onItemClick('profile')}
-            className={`
-              w-8 h-8 rounded-full bg-gradient-to-br from-[#0461BA] to-[#035299] 
-              flex items-center justify-center text-white
-              hover:ring-2 hover:ring-[#0461BA] hover:ring-offset-1
-              focus:ring-2 focus:ring-[#0461BA] focus:ring-offset-1
-              transition-shadow mx-auto
-            `}
-            aria-label="Profile"
-            style={{ marginLeft: isHovered ? 8 : 'auto', transition: 'margin 0.18s' }}
+        {/* Customer logo area */}
+        <div className="px-2 mb-3">
+          <div
+            className="h-20 rounded-md bg-[#E10613] text-white relative overflow-hidden border border-[#C70010]"
+            aria-label="Customer logo mockup"
           >
-            <UserIcon size={14} />
-            {isHovered && (
-              <span className="ml-3 text-sm font-medium whitespace-nowrap opacity-100 transition-opacity duration-200">
-                Profile
-              </span>
-            )}
-          </button>
+            <div className="h-full flex items-center justify-center">
+              <span className="text-lg font-bold tracking-wide lowercase">clough</span>
+            </div>
+            <span className="absolute right-2 top-3 w-5 h-5 rounded-full border-2 border-white border-l-transparent border-b-transparent rotate-45" />
+            <span className="absolute right-1.5 top-2.5 w-7 h-7 rounded-full border border-white/85 border-l-transparent border-b-transparent rotate-45" />
+            <span className="absolute right-1 top-2 w-9 h-9 rounded-full border border-white/70 border-l-transparent border-b-transparent rotate-45" />
+          </div>
         </div>
 
         {/* Main Nav Items */}
@@ -216,7 +158,7 @@ export function LeftRail({
           renderNavItem(item, navItems.length + index)
           )}
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Color Customizer Popover */}
       <ColorCustomizer

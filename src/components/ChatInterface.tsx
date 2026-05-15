@@ -15,10 +15,6 @@ import {
   MoreHorizontalIcon,
   MessageSquareIcon,
   SearchIcon,
-  Building2Icon,
-  Globe2Icon,
-  ChevronDownIcon,
-  CheckIcon,
   FileIcon } from
 'lucide-react';
 import { mockDocuments } from '../data/mockDocuments';
@@ -26,6 +22,7 @@ import { statusColors } from './DocumentCard';
 import { LeftRail } from './LeftRail';
 import { ClipboardPanel } from './ClipboardPanel';
 import { useClipboard } from '../contexts/ClipboardContext';
+import { useScope } from '../contexts/ScopeContext';
 import { Document } from '../types/document';
 interface ChatInterfaceProps {
   onExit: () => void;
@@ -242,34 +239,16 @@ export function ChatInterface({
   });
 
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [scope, setScope] = useState<ChatScope>(() => {
-    if (typeof window === 'undefined') return ENTERPRISE_SCOPE;
-    const saved = localStorage.getItem('flux.currentProject');
-    const match = PROJECTS.find((p) => p.name === saved);
-    return match ? { kind: 'project', id: match.id, name: match.name } : ENTERPRISE_SCOPE;
-  });
+  const { scope, setScope } = useScope();
   const askAboutRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     if (askAbout && askAbout !== askAboutRef.current) {
       askAboutRef.current = askAbout;
       setActiveId(null);
       setInputValue('');
-      const saved = typeof window !== 'undefined' ? localStorage.getItem('flux.currentProject') : null;
-      const match = PROJECTS.find((p) => p.name === saved);
-      if (match) setScope({ kind: 'project', id: match.id, name: match.name });
     }
   }, [askAbout]);
-  const [scopeMenuOpen, setScopeMenuOpen] = useState(false);
   const scopedConversations = conversations.filter((c) => scopesEqual(c.scope, scope));
-  const handleScopeChange = (next: ChatScope) => {
-    setScope(next);
-    setScopeMenuOpen(false);
-    setActiveId((prev) => {
-      if (!prev) return null;
-      const found = conversations.find((c) => c.id === prev);
-      return found && scopesEqual(found.scope, next) ? prev : null;
-    });
-  };
   const [historyOpen, setHistoryOpen] = useState(true);
   const [historyWidth, setHistoryWidth] = useState(288);
   const resizingRef = useRef(false);
@@ -370,7 +349,7 @@ export function ChatInterface({
     <button
       onClick={() => setClipboardPanelOpen(true)}
       title={`Add from clipboard (${clipboard.length})`}
-      className="w-12 h-12 rounded-full bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-600 flex items-center justify-center transition-colors shrink-0 shadow-sm relative"
+      className="w-12 h-12 rounded-full bg-white border border-neutral-200 hover:bg-[#F0F4F8] text-neutral-600 flex items-center justify-center transition-colors shrink-0 shadow-sm relative"
       aria-label="Add from clipboard">
       <PlusIcon size={18} />
       {clipboard.length > 0 && (
@@ -401,7 +380,7 @@ export function ChatInterface({
             <button
               key={doc.id}
               onClick={() => onDocumentSelect(doc.id)}
-              className="w-full flex items-center gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg hover:bg-neutral-100 hover:border-[#0461BA]/30 transition-colors group text-left">
+              className="w-full flex items-center gap-3 p-3 bg-[#F0F4F8] border border-neutral-200 rounded-lg hover:bg-neutral-200 hover:border-[#0461BA]/30 transition-colors group text-left">
 
                 <div className="w-10 h-10 rounded-md bg-[#E8F1FB] flex items-center justify-center text-[#0461BA] shrink-0">
                   <FileTextIcon size={20} />
@@ -446,7 +425,7 @@ export function ChatInterface({
             <button
               key={doc.id}
               onClick={() => onDocumentSelect(doc.id)}
-              className="w-full flex items-center gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg hover:bg-neutral-100 hover:border-[#0461BA]/30 transition-colors group text-left">
+              className="w-full flex items-center gap-3 p-3 bg-[#F0F4F8] border border-neutral-200 rounded-lg hover:bg-neutral-200 hover:border-[#0461BA]/30 transition-colors group text-left">
               
                 <div className="w-10 h-10 rounded-md bg-[#E8F1FB] flex items-center justify-center text-[#0461BA] shrink-0">
                   <FileTextIcon size={20} />
@@ -490,7 +469,7 @@ export function ChatInterface({
             <button
               key={doc.id}
               onClick={() => onDocumentSelect(doc.id)}
-              className="w-full flex items-center gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg hover:bg-neutral-100 hover:border-[#0461BA]/30 transition-colors group text-left">
+              className="w-full flex items-center gap-3 p-3 bg-[#F0F4F8] border border-neutral-200 rounded-lg hover:bg-neutral-200 hover:border-[#0461BA]/30 transition-colors group text-left">
               
                 <div className="w-10 h-10 rounded-md bg-[#E8F1FB] flex items-center justify-center text-[#0461BA] shrink-0">
                   <FileTextIcon size={20} />
@@ -533,7 +512,7 @@ export function ChatInterface({
             <button
               key={doc.id}
               onClick={() => onDocumentSelect(doc.id)}
-              className="w-full flex items-center gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg hover:bg-neutral-100 hover:border-[#0461BA]/30 transition-colors group text-left">
+              className="w-full flex items-center gap-3 p-3 bg-[#F0F4F8] border border-neutral-200 rounded-lg hover:bg-neutral-200 hover:border-[#0461BA]/30 transition-colors group text-left">
               
                 <div className="w-10 h-10 rounded-md bg-[#E8F1FB] flex items-center justify-center text-[#0461BA] shrink-0">
                   <FileTextIcon size={20} />
@@ -574,7 +553,7 @@ export function ChatInterface({
           <button
             key={doc.id}
             onClick={() => onDocumentSelect(doc.id)}
-            className="w-full flex items-center gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg hover:bg-neutral-100 hover:border-[#0461BA]/30 transition-colors group text-left">
+            className="w-full flex items-center gap-3 p-3 bg-[#F0F4F8] border border-neutral-200 rounded-lg hover:bg-neutral-200 hover:border-[#0461BA]/30 transition-colors group text-left">
             
               <div className="w-10 h-10 rounded-md bg-[#E8F1FB] flex items-center justify-center text-[#0461BA] shrink-0">
                 <FileTextIcon size={20} />
@@ -692,7 +671,7 @@ export function ChatInterface({
       transition={{
         duration: 0.25
       }}
-      className="fixed inset-x-0 top-6 bottom-0 bg-[#F8FAFC] z-30 flex pl-14">
+      className="fixed inset-x-0 top-[45px] bottom-0 bg-[#F8FAFC] z-30 flex pl-[var(--left-rail-width,88px)]">
 
       <LeftRail
         activeItem="chat"
@@ -706,10 +685,6 @@ export function ChatInterface({
         onResizeStart={startResize}
         onToggle={() => setHistoryOpen((v) => !v)}
         conversations={scopedConversations}
-        scope={scope}
-        scopeMenuOpen={scopeMenuOpen}
-        onScopeMenuToggle={() => setScopeMenuOpen((v) => !v)}
-        onScopeChange={handleScopeChange}
         activeId={activeId}
         search={historySearch}
         onSearchChange={setHistorySearch}
@@ -737,26 +712,6 @@ export function ChatInterface({
 
       {/* Right side: chat content */}
       <div className="flex-1 flex flex-col min-w-0">
-      {/* Scope banner */}
-      <div className="h-11 shrink-0 border-b border-neutral-100 px-4 flex items-center bg-white">
-        <div
-          className={`w-full h-8 px-3 rounded-md border inline-flex items-center gap-2 text-xs font-medium ${scope.kind === 'enterprise' ? 'border-violet-200 bg-violet-50 text-violet-900' : 'border-[#0461BA]/30 bg-[#E8F1FB] text-[#0461BA]'}`}
-          role="status"
-          aria-live="polite">
-          {scope.kind === 'enterprise' ?
-          <>
-            <Globe2Icon size={14} className="shrink-0" />
-            <span className="font-semibold uppercase tracking-wide">Enterprise chat</span>
-            <span className="text-violet-700/80 font-normal">— responses span every project you have access to</span>
-          </> :
-          <>
-            <Building2Icon size={14} className="shrink-0" />
-            <span className="font-semibold uppercase tracking-wide">Project chat</span>
-            <span className="text-[#0461BA]/80 font-normal">— scoped to <span className="font-semibold">{scope.name}</span></span>
-          </>
-          }
-        </div>
-      </div>
       {/* Messages Area / Empty State */}
       <div
         className="flex-1 overflow-y-auto flex flex-col"
@@ -766,7 +721,7 @@ export function ChatInterface({
         
         {messages.length === 0 ?
         <div className="flex-1 flex flex-col items-center justify-center p-4 max-w-2xl mx-auto w-full">
-            <div className="w-16 h-16 bg-[#E8F1FB] rounded-full flex items-center justify-center mb-4 shadow-sm">
+            <div className="w-16 h-16 bg-[#F0F4F8] rounded-full flex items-center justify-center mb-4 shadow-sm">
               <SparklesIcon size={32} className="text-[#0461BA]" />
             </div>
             {askAbout ?
@@ -815,7 +770,7 @@ export function ChatInterface({
                 <button
                 onClick={() => handleSend()}
                 disabled={!inputValue.trim() && selectedClipboardDocs.length === 0}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#0461BA] hover:bg-[#035299] disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors">
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#0461BA] hover:bg-[#035299] disabled:bg-[#F0F4F8] disabled:text-neutral-400 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors">
 
                   <SendIcon size={18} className="ml-0.5" />
                 </button>
@@ -827,7 +782,7 @@ export function ChatInterface({
             <button
               key={s}
               onClick={() => handleSend(s)}
-              className="px-4 py-2 bg-white border border-neutral-200 rounded-full text-sm text-neutral-600 hover:bg-neutral-50 hover:text-[#0461BA] transition-colors">
+              className="px-4 py-2 bg-white border border-neutral-200 rounded-full text-sm text-neutral-600 hover:bg-[#F0F4F8] hover:text-[#0461BA] transition-colors">
               
                   {s}
                 </button>
@@ -844,7 +799,7 @@ export function ChatInterface({
               <div key={message.id}>
                   {showTimestamp &&
                 <div className="flex justify-center mb-5">
-                      <span className="text-xs font-medium text-neutral-400 bg-neutral-100 px-3 py-1 rounded-full">
+                      <span className="text-xs font-medium text-neutral-400 bg-[#F0F4F8] px-3 py-1 rounded-full">
                         {message.timestamp}
                       </span>
                     </div>
@@ -956,7 +911,7 @@ export function ChatInterface({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask a follow-up question..."
-            className="flex-1 px-5 py-3.5 rounded-full bg-neutral-50 border border-neutral-200 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent text-sm transition-shadow"
+            className="flex-1 px-5 py-3.5 rounded-full bg-[#F0F4F8] border border-neutral-200 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent text-sm transition-shadow"
             aria-label="Message input" />
 
             {renderClipboardTrigger()}
@@ -1000,10 +955,6 @@ interface SidebarProps {
   onResizeStart: () => void;
   onToggle: () => void;
   conversations: Conversation[];
-  scope: ChatScope;
-  scopeMenuOpen: boolean;
-  onScopeMenuToggle: () => void;
-  onScopeChange: (s: ChatScope) => void;
   activeId: string | null;
   search: string;
   onSearchChange: (v: string) => void;
@@ -1033,7 +984,7 @@ function ChatHistorySidebar(p: SidebarProps) {
         <button
           onClick={p.onToggle}
           title="Show chat history"
-          className="w-8 h-8 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 flex items-center justify-center">
+          className="w-8 h-8 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 flex items-center justify-center">
 
           <PanelLeftOpenIcon size={16} />
         </button>
@@ -1052,68 +1003,17 @@ function ChatHistorySidebar(p: SidebarProps) {
     <aside
       className="shrink-0 border-r border-neutral-200 bg-white flex flex-col relative"
       style={{ width: p.width }}>
-      {/* Scope switcher */}
-      <div className="h-11 shrink-0 px-3 flex items-center border-b border-neutral-100 relative">
-        <button
-          onClick={p.onScopeMenuToggle}
-          aria-haspopup="listbox"
-          aria-expanded={p.scopeMenuOpen}
-          className={`w-full h-8 px-2.5 rounded-md border inline-flex items-center gap-2 text-sm font-medium transition-colors ${p.scope.kind === 'enterprise' ? 'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100' : 'border-[#0461BA]/30 bg-[#E8F1FB] text-[#0461BA] hover:bg-[#d6e7f8]'}`}>
-          {p.scope.kind === 'enterprise' ?
-          <Globe2Icon size={14} className="shrink-0" /> :
-          <Building2Icon size={14} className="shrink-0" />
-          }
-          <span className="flex-1 text-left truncate">
-            {p.scope.kind === 'enterprise' ? 'Enterprise chat' : p.scope.name}
-          </span>
-          <ChevronDownIcon size={14} className={`shrink-0 transition-transform ${p.scopeMenuOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {p.scopeMenuOpen &&
-        <div
-          role="listbox"
-          className="absolute left-3 right-3 top-full mt-1 z-20 bg-white border border-neutral-200 rounded-md shadow-lg overflow-hidden">
-            <button
-            onClick={() => p.onScopeChange({ kind: 'enterprise' })}
-            role="option"
-            aria-selected={p.scope.kind === 'enterprise'}
-            className="w-full px-3 py-2 inline-flex items-center gap-2 text-sm hover:bg-violet-50 text-left">
-              <Globe2Icon size={14} className="text-violet-600 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-neutral-900">Enterprise chat</div>
-                <div className="text-[11px] text-neutral-500 truncate">All projects you can access</div>
-              </div>
-              {p.scope.kind === 'enterprise' && <CheckIcon size={14} className="text-violet-600 shrink-0" />}
-            </button>
-            <div className="border-t border-neutral-100 px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-neutral-400 font-semibold">Projects</div>
-            {PROJECTS.map((proj) => {
-            const selected = p.scope.kind === 'project' && p.scope.id === proj.id;
-            return (
-              <button
-                key={proj.id}
-                onClick={() => p.onScopeChange({ kind: 'project', id: proj.id, name: proj.name })}
-                role="option"
-                aria-selected={selected}
-                className="w-full px-3 py-2 inline-flex items-center gap-2 text-sm hover:bg-[#E8F1FB] text-left">
-                <Building2Icon size={14} className="text-[#0461BA] shrink-0" />
-                <span className="flex-1 truncate text-neutral-900">{proj.name}</span>
-                {selected && <CheckIcon size={14} className="text-[#0461BA] shrink-0" />}
-              </button>);
-          })}
-          </div>
-        }
-      </div>
-
       <div className="px-3 py-3 flex items-center gap-2 border-b border-neutral-100">
         <button
           onClick={p.onNew}
-          className="flex-1 h-9 px-3 rounded-md bg-[#0461BA] text-white text-sm font-medium hover:bg-[#035299] inline-flex items-center justify-center gap-1.5">
+          className="flex-1 h-9 px-3 rounded-md bg-[#F0F4F8] text-neutral-700 text-sm font-medium hover:bg-neutral-200 hover:text-neutral-900 inline-flex items-center justify-center gap-1.5 border border-neutral-200 transition-colors">
 
-          <PlusIcon size={14} /> New chat
+          <PencilIcon size={14} /> New chat
         </button>
         <button
           onClick={p.onToggle}
           title="Hide chat history"
-          className="w-9 h-9 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 inline-flex items-center justify-center">
+          className="w-9 h-9 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 inline-flex items-center justify-center">
 
           <PanelLeftCloseIcon size={16} />
         </button>
@@ -1126,7 +1026,7 @@ function ChatHistorySidebar(p: SidebarProps) {
             value={p.search}
             onChange={(e) => p.onSearchChange(e.target.value)}
             placeholder="Search chats"
-            className="w-full h-8 pl-8 pr-2 rounded-md border border-neutral-200 bg-neutral-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:bg-white" />
+            className="w-full h-8 pl-8 pr-2 rounded-md border border-neutral-200 bg-[#F0F4F8] text-sm focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:bg-white" />
 
         </div>
       </div>
@@ -1166,7 +1066,7 @@ function renderItem(c: Conversation, p: SidebarProps) {
     <div
       key={c.id}
       className={`group relative mx-2 my-0.5 px-2 py-2 rounded-md cursor-pointer flex items-center gap-2 ${
-      isActive ? 'bg-[#E8F1FB] text-[#0461BA]' : 'hover:bg-neutral-100 text-neutral-700'}`
+      isActive ? 'bg-[#E8F1FB] text-[#0461BA]' : 'hover:bg-neutral-200 text-neutral-700'}`
       }
       onClick={() => !isRenaming && p.onSelect(c.id)}>
 
@@ -1203,13 +1103,13 @@ function renderItem(c: Conversation, p: SidebarProps) {
 
             <button
             onClick={(e) => { e.stopPropagation(); p.onPin(c.id); p.onMenuOpen(null); }}
-            className="w-full px-3 py-1.5 text-left hover:bg-neutral-50 flex items-center gap-2">
+            className="w-full px-3 py-1.5 text-left hover:bg-[#F0F4F8] flex items-center gap-2">
 
               {c.pinned ? <><PinOffIcon size={14} /> Unpin</> : <><PinIcon size={14} /> Pin</>}
             </button>
             <button
             onClick={(e) => { e.stopPropagation(); p.onStartRename(c.id, c.title); }}
-            className="w-full px-3 py-1.5 text-left hover:bg-neutral-50 flex items-center gap-2">
+            className="w-full px-3 py-1.5 text-left hover:bg-[#F0F4F8] flex items-center gap-2">
 
               <PencilIcon size={14} /> Rename
             </button>

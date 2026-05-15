@@ -143,7 +143,7 @@ export function FilterPanel({
             onChange={(e) => onSearchChange(e.target.value)}
             className="
               w-full pl-9 pr-3 py-2.5 
-              bg-neutral-50 border border-neutral-200 
+              bg-[#F0F4F8] border border-neutral-200 
               text-sm rounded-lg 
               text-neutral-900 placeholder-neutral-400
               focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent focus:bg-white
@@ -378,7 +378,7 @@ export function FilterPanel({
             onChange={(e) => setSelectedFileType(e.target.value)}
             className="
               w-full px-3 py-2.5 pr-8
-              bg-neutral-50 border border-neutral-200 
+              bg-[#F0F4F8] border border-neutral-200 
               text-sm rounded-lg 
               text-neutral-700
               focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent focus:bg-white
@@ -467,7 +467,7 @@ export function FilterPanel({
               onChange={(e) => setDateFrom(e.target.value)}
               className="
                 w-full px-3 py-2
-                bg-neutral-50 border border-neutral-200 
+                bg-[#F0F4F8] border border-neutral-200 
                 text-sm rounded-lg 
                 text-neutral-700
                 focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent focus:bg-white
@@ -490,7 +490,7 @@ export function FilterPanel({
               onChange={(e) => setDateTo(e.target.value)}
               className="
                 w-full px-3 py-2
-                bg-neutral-50 border border-neutral-200 
+                bg-[#F0F4F8] border border-neutral-200 
                 text-sm rounded-lg 
                 text-neutral-700
                 focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent focus:bg-white
@@ -610,7 +610,7 @@ export function FilterPanel({
                 onChange={(e) => setSelectedCompany(e.target.value)}
                 className="
                   w-full px-3 py-2.5 pr-8
-                  bg-neutral-50 border border-neutral-200 
+                  bg-[#F0F4F8] border border-neutral-200 
                   text-sm rounded-lg 
                   text-neutral-700
                   focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent focus:bg-white
@@ -647,7 +647,7 @@ export function FilterPanel({
                 onChange={(e) => setSelectedUser(e.target.value)}
                 className="
                   w-full px-3 py-2.5 pr-8
-                  bg-neutral-50 border border-neutral-200 
+                  bg-[#F0F4F8] border border-neutral-200 
                   text-sm rounded-lg 
                   text-neutral-700
                   focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent focus:bg-white
@@ -705,7 +705,7 @@ export function FilterPanel({
           onClick={handleClearAll}
           className="
             flex-1 py-2.5 
-            bg-neutral-50 hover:bg-neutral-100 
+            bg-[#F0F4F8] hover:bg-neutral-200 
             border border-neutral-200 hover:border-neutral-300
             text-sm rounded-lg 
             text-neutral-700 font-medium 

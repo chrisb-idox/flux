@@ -46,7 +46,7 @@ export function DocumentDetail() {
           <div className="flex items-center gap-5">
             <Link
               to="/"
-              className="p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors border border-transparent hover:border-neutral-200">
+              className="p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200 rounded-lg transition-colors border border-transparent hover:border-neutral-200">
               
               <ArrowLeftIcon size={20} />
             </Link>
@@ -69,11 +69,11 @@ export function DocumentDetail() {
             </div>
           </div>
           <div className="flex gap-3">
-            <button className="px-4 py-2 border border-neutral-200 bg-white text-sm font-medium flex items-center gap-2 hover:bg-neutral-50 hover:border-neutral-300 transition-all rounded-lg text-neutral-700 shadow-sm">
+            <button className="px-4 py-2 border border-neutral-200 bg-white text-sm font-medium flex items-center gap-2 hover:bg-[#F0F4F8] hover:border-neutral-300 transition-all rounded-lg text-neutral-700 shadow-sm">
               <PrinterIcon size={16} className="text-neutral-500" />
               Print
             </button>
-            <button className="px-4 py-2 border border-neutral-200 bg-white text-sm font-medium flex items-center gap-2 hover:bg-neutral-50 hover:border-neutral-300 transition-all rounded-lg text-neutral-700 shadow-sm">
+            <button className="px-4 py-2 border border-neutral-200 bg-white text-sm font-medium flex items-center gap-2 hover:bg-[#F0F4F8] hover:border-neutral-300 transition-all rounded-lg text-neutral-700 shadow-sm">
               <ShareIcon size={16} className="text-neutral-500" />
               Share
             </button>
@@ -110,7 +110,7 @@ export function DocumentDetail() {
                   {document.description}
                 </p>
 
-                <div className="mt-4 p-4 bg-neutral-50 border border-neutral-200 rounded-md flex items-start gap-3">
+                <div className="mt-4 p-4 bg-[#F0F4F8] border border-neutral-200 rounded-md flex items-start gap-3">
                   <FileTextIcon
                     className="text-neutral-400 shrink-0 mt-0.5"
                     size={20} />

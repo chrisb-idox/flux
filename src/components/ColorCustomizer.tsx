@@ -64,7 +64,7 @@ export function ColorCustomizer({ isOpen, onClose }: ColorCustomizerProps) {
                     key={opt.id}
                     onClick={() => select(opt.id)}
                     className={`w-full flex items-center gap-3 p-2.5 rounded-md transition-all ${
-                    active ? 'bg-[#E8F1FB] border border-[#0461BA]' : 'hover:bg-neutral-50 border border-transparent'}`
+                    active ? 'bg-[#E8F1FB] border border-[#0461BA]' : 'hover:bg-[#F0F4F8] border border-transparent'}`
                     }>
 
                     <div className={`w-8 h-8 rounded-md flex items-center justify-center ${active ? 'bg-[#0461BA] text-white' : 'bg-neutral-100 text-neutral-600'}`}>
@@ -85,3 +85,4 @@ export function ColorCustomizer({ isOpen, onClose }: ColorCustomizerProps) {
     </AnimatePresence>);
 
 }
+

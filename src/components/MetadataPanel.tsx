@@ -56,7 +56,7 @@ export function MetadataPanel({ document }: MetadataPanelProps) {
 
   return (
     <div className="border border-neutral-200 bg-white rounded-lg shadow-sm overflow-hidden">
-      <div className="border-b border-neutral-200 px-4 py-2.5 bg-neutral-50">
+      <div className="border-b border-neutral-200 px-4 py-2.5 bg-[#F0F4F8]">
         <h2 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">
           Document Metadata
         </h2>

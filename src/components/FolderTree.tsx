@@ -63,7 +63,7 @@ export function FolderTree({
     return (
       <div key={folder.id}>
         <div
-          className={`flex items-center gap-2 px-2 py-1.5 cursor-pointer transition-colors group rounded-md mx-1 ${isSelected ? 'bg-[#E8F1FB] text-[#0461BA]' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'}`}
+          className={`flex items-center gap-2 px-2 py-1.5 cursor-pointer transition-colors group rounded-md mx-1 ${isSelected ? 'bg-[#E8F1FB] text-[#0461BA]' : 'text-neutral-700 hover:bg-neutral-200 hover:text-neutral-900'}`}
           style={{
             paddingLeft: `${8 + level * 12}px`
           }}
@@ -156,7 +156,7 @@ export function FolderTree({
             onChange={(e) => setSearchTerm(e.target.value)}
             className="
               w-full pl-9 pr-3 py-2.5 
-              bg-neutral-50 border border-neutral-200 
+              bg-[#F0F4F8] border border-neutral-200 
               text-sm rounded-lg 
               text-neutral-900 placeholder-neutral-400
               focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:border-transparent focus:bg-white
@@ -175,7 +175,7 @@ export function FolderTree({
 
       <div className="flex-1 overflow-y-auto pb-4 custom-scrollbar">
         <div
-          className={`flex items-center gap-2 px-2 py-1.5 mx-1 mb-2 rounded-md cursor-pointer transition-colors group ${selectedFolderId === null ? 'bg-[#E8F1FB] text-[#0461BA]' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'}`}
+          className={`flex items-center gap-2 px-2 py-1.5 mx-1 mb-2 rounded-md cursor-pointer transition-colors group ${selectedFolderId === null ? 'bg-[#E8F1FB] text-[#0461BA]' : 'text-neutral-700 hover:bg-neutral-200 hover:text-neutral-900'}`}
           onClick={() => onFolderSelect(null)}>
           
           <FolderIcon

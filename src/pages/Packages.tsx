@@ -307,36 +307,17 @@ export function Packages() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-24px)] mt-6 bg-neutral-50">
+    <div
+      className="h-[calc(100vh-45px)] mt-[45px] font-sans overflow-y-auto p-3"
+      style={{
+        backgroundColor: 'var(--main-bg-color, #EAEEF6)'
+      }}>
       <LeftRail
         activeItem={activeRailItem}
         onItemClick={setActiveRailItem}
         onChatClick={() => {}} />
 
-
-      {/* Top bar */}
-      <header className="ml-14 h-14 bg-white border-b border-neutral-200 flex items-center px-6 gap-4 sticky top-6 z-10">
-        <div className="flex items-center gap-2 text-sm text-neutral-500">
-          <span>The Shard, London</span>
-          <ChevronRightIcon size={14} />
-          <span className="text-neutral-900 font-medium">Packages</span>
-        </div>
-        <div className="flex-1 max-w-xl ml-6 relative">
-          <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-          <input
-            placeholder="Search packages, documents, references…"
-            className="w-full h-9 pl-9 pr-3 rounded-md border border-neutral-200 bg-neutral-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:bg-white" />
-
-        </div>
-        <div className="ml-auto flex items-center gap-3 text-sm text-neutral-500">
-          <span>Project: Phase 3</span>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0461BA] to-[#035299] flex items-center justify-center text-white">
-            <UserIcon size={14} />
-          </div>
-        </div>
-      </header>
-
-      <main className="ml-14 p-6">
+      <main className="ml-[var(--left-rail-width,88px)]">
         {view === 'library' &&
         <PackageLibrary
           packages={packages}
@@ -447,22 +428,6 @@ function PackageLibrary({
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-neutral-900">Packages</h1>
-          <p className="text-sm text-neutral-500 mt-1">
-            Controlled deliverable sets. Independent of folder structure — gather documents from anywhere in the project.
-          </p>
-        </div>
-        <button
-          onClick={onNew}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-[#0461BA] text-white text-sm font-medium hover:bg-[#035299] transition-colors">
-
-          <PlusIcon size={16} />
-          New Package
-        </button>
-      </div>
-
       <div className="flex gap-4 items-start">
         {/* Left filter panel */}
         <aside className="w-64 shrink-0 bg-white border border-neutral-200 rounded-lg overflow-hidden">
@@ -542,9 +507,20 @@ function PackageLibrary({
         </aside>
 
         {/* Right: table */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 bg-white border border-neutral-200 rounded-lg overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-neutral-200 flex items-center justify-between bg-white shrink-0">
+            <p className="text-xs font-medium text-neutral-600">{filtered.length} packages</p>
+            <button
+              onClick={onNew}
+              className="inline-flex items-center gap-2 h-7 px-3 rounded-md bg-[#0461BA] text-white text-xs font-medium hover:bg-[#035299] transition-colors">
+              <PlusIcon size={14} />
+              New Package
+            </button>
+          </div>
+
           {activeCount > 0 &&
-          <div className="flex flex-wrap items-center gap-2 mb-3">
+          <div className="flex flex-wrap items-center gap-2 px-4 pt-3 pb-1 border-b border-neutral-100 bg-white shrink-0">
               {search &&
               <FilterPill label={`Search: "${search}"`} onClear={() => setSearch('')} />
               }
@@ -566,13 +542,13 @@ function PackageLibrary({
               <button
                 onClick={clearAll}
                 className="ml-1 text-xs text-rose-600 hover:underline">
-
                 Clear all
               </button>
             </div>
           }
-          <div className="text-xs text-neutral-500 mb-2">{filtered.length} packages</div>
-          <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+
+          {/* Table */}
+          <div className="flex-1 overflow-y-auto">
         <table className="w-full text-sm">
           <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-600">
             <tr>
@@ -589,12 +565,11 @@ function PackageLibrary({
           </thead>
           <tbody>
             {filtered.map((p) =>
-            <tr key={p.reference} className="border-b border-neutral-100 hover:bg-neutral-50/60">
+              <tr key={p.reference} className="border-b border-neutral-100 hover:bg-neutral-50/60">
                 <td className="px-4 py-3">
                   <button
-                  onClick={() => onOpen(p.reference)}
-                  className="font-mono text-xs text-[#0461BA] hover:underline">
-
+                    onClick={() => onOpen(p.reference)}
+                    className="font-mono text-xs text-[#0461BA] hover:underline">
                     {p.reference}
                   </button>
                 </td>
@@ -616,7 +591,7 @@ function PackageLibrary({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
-                    <IconBtn title="Open" onClick={() => onOpen(p.reference)}><EyeIcon size={14} /></IconBtn>
+                    {/* Removed EyeIcon (Open) button */}
                     <IconBtn title="Repackage" onClick={() => onRepackage(p.reference)}><RefreshCwIcon size={14} /></IconBtn>
                     <IconBtn title="Issue / Transmit" onClick={() => onAction('Transmittal started')}><SendIcon size={14} /></IconBtn>
                     <IconBtn title="Download PDF" onClick={() => onAction('Downloading PDF…')}><DownloadIcon size={14} /></IconBtn>
@@ -627,10 +602,10 @@ function PackageLibrary({
             )}
           </tbody>
         </table>
-        {filtered.length === 0 &&
-        <div className="p-10 text-center text-neutral-500 text-sm">No packages match this filter.</div>
-        }
           </div>
+          {filtered.length === 0 &&
+          <div className="p-10 text-center text-neutral-500 text-sm flex items-center justify-center flex-1">No packages match this filter.</div>
+          }
         </div>
       </div>
 
@@ -1444,3 +1419,4 @@ function ActivityItem({ who, what, when }: {who: string;what: string;when: strin
     </li>);
 
 }
+

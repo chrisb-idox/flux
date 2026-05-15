@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
+import { useScope } from '../contexts/ScopeContext';
 import {
   AlertCircleIcon,
   BellIcon,
@@ -170,15 +172,23 @@ const FAV_FILTERS = ['All', 'Documents', 'Folders', 'Packages', 'Reports', 'Sear
 function OverviewPane({
   overdueTodos,
   unreadNotifs,
+  todos,
+  notifications,
+  sharedItems,
+  favourites,
   onSelectSection,
 }: {
   overdueTodos: number;
   unreadNotifs: number;
+  todos: TodoItem[];
+  notifications: NotificationItem[];
+  sharedItems: SharedItem[];
+  favourites: FavouriteItem[];
   onSelectSection: (section: DashboardSection) => void;
 }) {
-  const dueToday = mockTodos.filter((t) => t.status === 'Due Today').length;
-  const sharedCount = mockSharedItems.length;
-  const favCount = mockFavourites.length;
+  const dueToday = todos.filter((t) => t.status === 'Due Today').length;
+  const sharedCount = sharedItems.length;
+  const favCount = favourites.length;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -241,7 +251,7 @@ function OverviewPane({
             <button onClick={() => onSelectSection('todo')} className="text-xs text-[#0461BA] font-medium">View all</button>
           </div>
           <div className="divide-y divide-neutral-50">
-            {mockTodos.slice(0, 3).map((t) => (
+            {todos.slice(0, 3).map((t) => (
               <div key={t.id} className="px-3 py-2.5">
                 <p className="text-sm text-neutral-800 line-clamp-1">{t.title}</p>
                 <p className="text-xs text-neutral-500 mt-0.5">{t.project}</p>
@@ -256,7 +266,7 @@ function OverviewPane({
             <button onClick={() => onSelectSection('notifications')} className="text-xs text-[#0461BA] font-medium">View all</button>
           </div>
           <div className="divide-y divide-neutral-50">
-            {mockNotifications.slice(0, 3).map((n) => (
+            {notifications.slice(0, 3).map((n) => (
               <div key={n.id} className="px-3 py-2.5">
                 <p className="text-sm text-neutral-800 line-clamp-1">{n.title}</p>
                 <p className="text-xs text-neutral-500 mt-0.5">{relativeTime(n.timestamp)}</p>
@@ -271,7 +281,7 @@ function OverviewPane({
             <button onClick={() => onSelectSection('favourites')} className="text-xs text-[#0461BA] font-medium">View all</button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-neutral-50">
-            {mockFavourites.slice(0, 3).map((f) => (
+            {favourites.slice(0, 3).map((f) => (
               <div key={f.id} className="px-3 py-2.5">
                 <p className="text-sm text-neutral-800 line-clamp-1">{f.name}</p>
                 <p className="text-xs text-neutral-500 mt-0.5">{f.project}</p>
@@ -291,9 +301,19 @@ function OverviewPane({
 function DashboardContent({
   section,
   openPanel,
+  todos,
+  notifications,
+  recentActivity,
+  sharedItems,
+  favourites,
 }: {
   section: DashboardSection;
   openPanel: (data: DetailPanelData) => void;
+  todos: TodoItem[];
+  notifications: NotificationItem[];
+  recentActivity: RecentActivityItem[];
+  sharedItems: SharedItem[];
+  favourites: FavouriteItem[];
 }) {
   const [todoFilter, setTodoFilter] = useState('All');
   const [notifFilter, setNotifFilter] = useState('All');
@@ -302,7 +322,7 @@ function DashboardContent({
   const [favFilter, setFavFilter] = useState('All');
 
   const todoFiltered = useMemo(() => {
-    return mockTodos.filter((t) => {
+    return todos.filter((t) => {
       if (todoFilter === 'All') return true;
       if (todoFilter === 'Overdue') return t.status === 'Overdue';
       if (todoFilter === 'Due Today') return t.status === 'Due Today';
@@ -313,10 +333,10 @@ function DashboardContent({
       if (todoFilter === 'Transmittal') return t.category === 'Transmittal';
       return true;
     });
-  }, [todoFilter]);
+  }, [todoFilter, todos]);
 
   const notifFiltered = useMemo(() => {
-    return mockNotifications.filter((n) => {
+    return notifications.filter((n) => {
       if (notifFilter === 'All') return true;
       if (notifFilter === 'Unread') return !n.isRead;
       if (notifFilter === 'Action Required') return n.severity === 'Action Required';
@@ -327,17 +347,17 @@ function DashboardContent({
       if (notifFilter === 'Document') return n.category === 'Document';
       return true;
     });
-  }, [notifFilter]);
+  }, [notifFilter, notifications]);
 
   const recentFiltered = useMemo(() => {
-    return mockRecentActivity.filter((a) => {
+    return recentActivity.filter((a) => {
       if (recentFilter === 'All') return true;
       return a.category === recentFilter;
     });
-  }, [recentFilter]);
+  }, [recentFilter, recentActivity]);
 
   const sharedFiltered = useMemo(() => {
-    return mockSharedItems.filter((s) => {
+    return sharedItems.filter((s) => {
       if (sharedFilter === 'All') return true;
       if (sharedFilter === 'Documents') return s.type === 'document';
       if (sharedFilter === 'Folders') return s.type === 'folder';
@@ -345,10 +365,10 @@ function DashboardContent({
       if (sharedFilter === 'Reports') return s.type === 'report';
       return true;
     });
-  }, [sharedFilter]);
+  }, [sharedFilter, sharedItems]);
 
   const favFiltered = useMemo(() => {
-    return mockFavourites.filter((f) => {
+    return favourites.filter((f) => {
       if (favFilter === 'All') return true;
       if (favFilter === 'Documents') return f.type === 'document';
       if (favFilter === 'Folders') return f.type === 'folder';
@@ -357,7 +377,7 @@ function DashboardContent({
       if (favFilter === 'Searches') return f.type === 'search';
       return true;
     });
-  }, [favFilter]);
+  }, [favFilter, favourites]);
 
   const toTodoDetail = (t: TodoItem): DetailPanelData => ({
     objectType: t.objectType as DetailPanelObjectType,
@@ -617,58 +637,88 @@ function DashboardContent({
 }
 
 export function Dashboard() {
+  const location = useLocation();
+  const { scope } = useScope();
   const [activeItem, setActiveItem] = useState('dashboard');
   const [selectedSection, setSelectedSection] = useState<DashboardSection>('overview');
   const [panelData, setPanelData] = useState<DetailPanelData | null>(null);
 
-  const overdueTodos = mockTodos.filter((t) => t.status === 'Overdue').length;
-  const unreadNotifs = mockNotifications.filter((n) => !n.isRead).length;
+  // Filter all data by scope
+  const scopeProjectName = scope.kind === 'project' ? scope.name : null;
+  const filteredTodos = scopeProjectName 
+    ? mockTodos.filter((t) => t.project === scopeProjectName)
+    : mockTodos;
+  const filteredNotifications = scopeProjectName
+    ? mockNotifications.filter((n) => n.project === scopeProjectName)
+    : mockNotifications;
+  const filteredRecentActivity = scopeProjectName
+    ? mockRecentActivity.filter((r) => r.project === scopeProjectName)
+    : mockRecentActivity;
+  const filteredSharedItems = scopeProjectName
+    ? mockSharedItems.filter((s) => s.project === scopeProjectName)
+    : mockSharedItems;
+  const filteredFavourites = scopeProjectName
+    ? mockFavourites.filter((f) => f.project === scopeProjectName)
+    : mockFavourites;
+
+  const overdueTodos = filteredTodos.filter((t) => t.status === 'Overdue').length;
+  const unreadNotifs = filteredNotifications.filter((n) => !n.isRead).length;
 
   const sectionItems = [
     {
       id: 'todo' as DashboardSection,
       label: 'To Do Actions',
-      summary: `${overdueTodos} overdue, ${mockTodos.filter((t) => t.status === 'Due Today').length} due today`,
-      count: mockTodos.length,
+      summary: `${overdueTodos} overdue, ${filteredTodos.filter((t) => t.status === 'Due Today').length} due today`,
+      count: filteredTodos.length,
       icon: CheckSquareIcon,
     },
     {
       id: 'notifications' as DashboardSection,
       label: 'Notifications',
       summary: `${unreadNotifs} new notifications`,
-      count: mockNotifications.length,
+      count: filteredNotifications.length,
       icon: BellIcon,
     },
     {
       id: 'recent' as DashboardSection,
       label: 'Recent Notifications',
-      summary: `${mockRecentActivity.length} recent updates`,
-      count: mockRecentActivity.length,
+      summary: `${filteredRecentActivity.length} recent updates`,
+      count: filteredRecentActivity.length,
       icon: ClockIcon,
     },
     {
       id: 'shared' as DashboardSection,
       label: 'Shared With Me',
-      summary: `${mockSharedItems.length} shared items`,
-      count: mockSharedItems.length,
+      summary: `${filteredSharedItems.length} shared items`,
+      count: filteredSharedItems.length,
       icon: Share2Icon,
     },
     {
       id: 'favourites' as DashboardSection,
       label: 'Favourites',
-      summary: `${mockFavourites.length} saved favourites`,
-      count: mockFavourites.length,
+      summary: `${filteredFavourites.length} saved favourites`,
+      count: filteredFavourites.length,
       icon: StarIcon,
     },
   ];
 
+  useEffect(() => {
+    const navState = location.state as { focusSection?: DashboardSection; requestId?: number } | null;
+    if (navState?.focusSection) {
+      setSelectedSection(navState.focusSection);
+    }
+  }, [location.state]);
+
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div
+      className="h-[calc(100vh-45px)] mt-[45px] font-sans overflow-y-auto p-3"
+      style={{
+        backgroundColor: 'var(--main-bg-color, #EAEEF6)'
+      }}>
       <LeftRail activeItem={activeItem} onItemClick={setActiveItem} onChatClick={() => {}} />
 
-      <main className="ml-11 pt-6 px-6 pb-10 min-h-screen">
+      <main className="ml-[var(--left-rail-width,88px)]">
         <div className="mb-5">
-          <h1 className="text-xl font-bold text-neutral-900">Dashboard</h1>
           <p className="text-sm text-neutral-500 mt-0.5">
             Welcome back. {overdueTodos > 0 && <span className="text-red-600 font-medium">{overdueTodos} overdue action{overdueTodos > 1 ? 's' : ''}</span>}
             {overdueTodos > 0 && unreadNotifs > 0 && ' and '}
@@ -677,10 +727,10 @@ export function Dashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-[280px_minmax(0,1fr)] gap-4 min-h-[calc(100vh-150px)]">
-          <section className="bg-white border border-neutral-200 rounded-xl shadow-sm overflow-hidden h-fit sticky top-8">
+        <div className="grid grid-cols-[280px_minmax(0,1fr)] gap-3 min-h-[calc(100vh-95px)]">
+          <section className="bg-white border border-neutral-200 rounded-xl shadow-sm overflow-hidden h-fit sticky top-3">
             <div className="px-4 py-3 border-b border-neutral-100">
-              <h2 className="text-sm font-semibold text-neutral-800">Dashboard Sections</h2>
+              <h2 className="text-sm font-semibold text-neutral-800">Home Sections</h2>
               <p className="text-xs text-neutral-500 mt-0.5">Select a section to view details</p>
             </div>
 
@@ -724,9 +774,9 @@ export function Dashboard() {
             className="bg-white border border-neutral-200 rounded-xl shadow-sm overflow-hidden min-h-[480px]"
           >
             {selectedSection === 'overview' ? (
-              <OverviewPane overdueTodos={overdueTodos} unreadNotifs={unreadNotifs} onSelectSection={setSelectedSection} />
+              <OverviewPane overdueTodos={overdueTodos} unreadNotifs={unreadNotifs} todos={filteredTodos} notifications={filteredNotifications} sharedItems={filteredSharedItems} favourites={filteredFavourites} onSelectSection={setSelectedSection} />
             ) : (
-              <DashboardContent section={selectedSection} openPanel={setPanelData} />
+              <DashboardContent section={selectedSection} openPanel={setPanelData} todos={filteredTodos} notifications={filteredNotifications} recentActivity={filteredRecentActivity} sharedItems={filteredSharedItems} favourites={filteredFavourites} />
             )}
           </motion.section>
         </div>
@@ -736,3 +786,4 @@ export function Dashboard() {
     </div>
   );
 }
+

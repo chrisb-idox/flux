@@ -114,7 +114,7 @@ function DocumentDetail({ data }: { data: DetailPanelData }) {
       )}
       <div className="border-t border-neutral-100 pt-4 flex gap-2">
         <button className="flex-1 text-sm font-medium py-2 px-3 rounded-md bg-[#0461BA] text-white hover:bg-[#035299] transition-colors">Open Document</button>
-        <button className="text-sm font-medium py-2 px-3 rounded-md border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors">Download</button>
+        <button className="text-sm font-medium py-2 px-3 rounded-md border border-neutral-200 text-neutral-700 hover:bg-[#F0F4F8] transition-colors">Download</button>
       </div>
     </div>
   );
@@ -139,7 +139,7 @@ function TransmittalDetail({ data }: { data: DetailPanelData }) {
       )}
       <div className="border-t border-neutral-100 pt-4 flex gap-2">
         <button className="flex-1 text-sm font-medium py-2 px-3 rounded-md bg-[#0461BA] text-white hover:bg-[#035299] transition-colors">Open Transmittal</button>
-        <button className="text-sm font-medium py-2 px-3 rounded-md border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors">Download PDF</button>
+        <button className="text-sm font-medium py-2 px-3 rounded-md border border-neutral-200 text-neutral-700 hover:bg-[#F0F4F8] transition-colors">Download PDF</button>
       </div>
     </div>
   );
@@ -164,7 +164,7 @@ function ReviewDetail({ data }: { data: DetailPanelData }) {
       )}
       <div className="border-t border-neutral-100 pt-4 flex gap-2">
         <button className="flex-1 text-sm font-medium py-2 px-3 rounded-md bg-[#0461BA] text-white hover:bg-[#035299] transition-colors">Open Review</button>
-        <button className="text-sm font-medium py-2 px-3 rounded-md border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors">Add Comment</button>
+        <button className="text-sm font-medium py-2 px-3 rounded-md border border-neutral-200 text-neutral-700 hover:bg-[#F0F4F8] transition-colors">Add Comment</button>
       </div>
     </div>
   );
@@ -258,13 +258,13 @@ export function DetailSlidePanel({ data, onClose }: DetailSlidePanelProps) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.28, ease: [0.32, 0, 0.16, 1] }}
-            className="fixed top-6 right-0 bottom-0 w-1/2 min-w-[380px] max-w-[640px] bg-white border-l border-neutral-200 shadow-2xl z-50 flex flex-col overflow-hidden"
+            className="fixed top-[45px] right-0 bottom-0 w-1/2 min-w-[380px] max-w-[640px] bg-white border-l border-neutral-200 shadow-2xl z-50 flex flex-col overflow-hidden"
             role="dialog"
             aria-modal="true"
             aria-label={`${data.title} details`}
           >
             {/* Header */}
-            <div className="flex items-start gap-3 px-6 py-4 border-b border-neutral-100 bg-neutral-50">
+            <div className="flex items-start gap-3 px-6 py-4 border-b border-neutral-100 bg-[#F0F4F8]">
               {(() => {
                 const cfg = typeConfig[data.objectType];
                 const Icon = cfg.icon;
@@ -294,7 +294,7 @@ export function DetailSlidePanel({ data, onClose }: DetailSlidePanelProps) {
               </div>
               <button
                 onClick={onClose}
-                className="flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                className="flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 transition-colors"
                 aria-label="Close panel"
               >
                 <XIcon size={16} />
@@ -315,3 +315,4 @@ export function DetailSlidePanel({ data, onClose }: DetailSlidePanelProps) {
     </AnimatePresence>
   );
 }
+

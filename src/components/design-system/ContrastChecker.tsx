@@ -58,13 +58,13 @@ export function ContrastChecker({
       <table className="w-full text-sm text-left border-collapse">
         <thead>
           <tr>
-            <th className="p-3 border-b border-neutral-200 bg-neutral-50 font-medium text-neutral-500">
+            <th className="p-3 border-b border-neutral-200 bg-[#F0F4F8] font-medium text-neutral-500">
               Text / Bg
             </th>
             {backgrounds.map((bg) =>
             <th
               key={bg.name}
-              className="p-3 border-b border-neutral-200 bg-neutral-50 font-medium text-neutral-500 min-w-[120px]">
+              className="p-3 border-b border-neutral-200 bg-[#F0F4F8] font-medium text-neutral-500 min-w-[120px]">
               
                 <div className="flex items-center gap-2">
                   <div

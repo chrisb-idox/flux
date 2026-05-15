@@ -2,33 +2,36 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeftIcon,
-  ChevronRightIcon,
   FilterIcon,
   FolderIcon } from
 'lucide-react';
 interface CollapsibleFilterPanelProps {
-  isExpanded: boolean;
-  onToggle: () => void;
+  isExpanded?: boolean;
+  onToggle?: () => void;
+  showCollapseToggle?: boolean;
   mode: 'filter' | 'folder';
   onModeChange: (mode: 'filter' | 'folder') => void;
   children: React.ReactNode;
   topSlot?: React.ReactNode;
 }
 export function CollapsibleFilterPanel({
-  isExpanded,
+  isExpanded = true,
   onToggle,
+  showCollapseToggle = true,
   mode,
   onModeChange,
   children,
   topSlot
 }: CollapsibleFilterPanelProps) {
+  const panelExpanded = showCollapseToggle ? isExpanded : true;
+
   return (
     <div className="relative h-full flex-shrink-0 flex">
       {/* Main Panel - Island Card */}
       <motion.div
         initial={false}
         animate={{
-          width: isExpanded ? 320 : 0
+          width: panelExpanded ? 320 : 0
         }}
         transition={{
           duration: 0.2,
@@ -38,12 +41,12 @@ export function CollapsibleFilterPanel({
         style={{
           backgroundColor: 'var(--element-bg-color, #FFFFFF)'
         }}
-        aria-expanded={isExpanded}
+        aria-expanded={panelExpanded}
         aria-controls="filter-panel-content">
         
         {/* Expanded Content */}
         <AnimatePresence mode="wait">
-          {isExpanded &&
+          {panelExpanded &&
           <motion.div
             key="expanded"
             initial={{
@@ -99,45 +102,35 @@ export function CollapsibleFilterPanel({
         </AnimatePresence>
       </motion.div>
 
-      {/* Toggle Tab Button - Always visible, positioned on the edge */}
-      <button
-        onClick={onToggle}
-        className="
-          relative z-10 h-8 self-start mt-3
-          flex items-center justify-center
-          bg-white border border-l-0 border-neutral-200 
-          shadow-sm
-          hover:bg-neutral-50 hover:border-neutral-300
-          focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:ring-offset-1
-          transition-colors
-          rounded-r-md
-        "
-
-
-
-
-
-
-
-
-
-        style={{
-          width: '18px',
-          marginLeft: '-1px'
-        }}
-        aria-label={isExpanded ? 'Collapse panel' : 'Expand panel'}>
-        
-        <motion.div
-          animate={{
-            rotate: isExpanded ? 0 : 180
+      {showCollapseToggle && (
+        <button
+          onClick={onToggle}
+          className="
+            relative z-10 h-8 self-start mt-3
+            flex items-center justify-center
+            bg-white border border-l-0 border-neutral-200 
+            shadow-sm
+            hover:bg-[#F0F4F8] hover:border-neutral-300
+            focus:outline-none focus:ring-2 focus:ring-[#0461BA] focus:ring-offset-1
+            transition-colors
+            rounded-r-md
+          "
+          style={{
+            width: '18px',
+            marginLeft: '-1px'
           }}
-          transition={{
-            duration: 0.2
-          }}>
-          
-          <ChevronLeftIcon size={14} className="text-neutral-500" />
-        </motion.div>
-      </button>
+          aria-label={panelExpanded ? 'Collapse panel' : 'Expand panel'}>
+          <motion.div
+            animate={{
+              rotate: panelExpanded ? 0 : 180
+            }}
+            transition={{
+              duration: 0.2
+            }}>
+            <ChevronLeftIcon size={14} className="text-neutral-500" />
+          </motion.div>
+        </button>
+      )}
     </div>);
 
 }

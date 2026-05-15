@@ -53,7 +53,7 @@ export function RelationshipsPanel({ relationships }: RelationshipsPanelProps) {
   );
   return (
     <div className="border border-neutral-200 bg-white rounded-lg shadow-sm overflow-hidden">
-      <div className="border-b border-neutral-200 px-4 py-2.5 bg-neutral-50">
+      <div className="border-b border-neutral-200 px-4 py-2.5 bg-[#F0F4F8]">
         <h2 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">
           Relationships
         </h2>
@@ -76,7 +76,7 @@ export function RelationshipsPanel({ relationships }: RelationshipsPanelProps) {
               <Link
                 key={idx}
                 to={`/document/${rel.documentId}`}
-                className="block p-3 border border-neutral-100 bg-neutral-25 hover:bg-neutral-50 hover:border-neutral-200 rounded-lg transition-all group">
+                className="block p-3 border border-neutral-100 bg-neutral-25 hover:bg-[#F0F4F8] hover:border-neutral-200 rounded-lg transition-all group">
                 
                       <div className="font-medium text-sm text-secondary-600 group-hover:text-secondary-700 mb-0.5">
                         {rel.documentId}

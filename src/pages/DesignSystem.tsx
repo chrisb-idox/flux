@@ -219,7 +219,7 @@ export function DesignSystem() {
           <div className="flex items-center gap-4">
             <Link
               to="/"
-              className="p-2 hover:bg-neutral-50 rounded-full transition-colors text-neutral-500 hover:text-neutral-900">
+              className="p-2 hover:bg-[#F0F4F8] rounded-full transition-colors text-neutral-500 hover:text-neutral-900">
               
               <ArrowLeftIcon size={20} />
             </Link>
@@ -445,7 +445,7 @@ export function DesignSystem() {
                     Subtitles / Hints
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 bg-neutral-500 rounded border border-neutral-200"></span>
+                    <span className="w-4 h-4 bg-[#F0F4F8]0 rounded border border-neutral-200"></span>
                     <code className="text-xs text-neutral-700">
                       Neutral 500
                     </code>
