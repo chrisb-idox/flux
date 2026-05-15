@@ -9,6 +9,8 @@ interface FilterPanelProps {
   onDocTypeChange: (types: string[]) => void;
   selectedProject: string[];
   onProjectChange: (projects: string[]) => void;
+  selectedCategories: string[];
+  onCategoryChange: (categories: string[]) => void;
 }
 export function FilterPanel({
   searchTerm,
@@ -18,14 +20,15 @@ export function FilterPanel({
   selectedDocType,
   onDocTypeChange,
   selectedProject,
-  onProjectChange
+  onProjectChange,
+  selectedCategories,
+  onCategoryChange
 }: FilterPanelProps) {
   const [includePlaceholders, setIncludePlaceholders] = useState(false);
   const [selectedFileType, setSelectedFileType] = useState('');
   const [currentVersionOnly, setCurrentVersionOnly] = useState(false);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
   const statuses = ['Draft', 'In Review', 'Approved', 'Superseded', 'Archived'];
@@ -106,13 +109,13 @@ export function FilterPanel({
     onStatusChange([]);
     onDocTypeChange([]);
     onProjectChange([]);
+    onCategoryChange([]);
     onSearchChange('');
     setIncludePlaceholders(false);
     setSelectedFileType('');
     setCurrentVersionOnly(false);
     setDateFrom('');
     setDateTo('');
-    setSelectedCategories([]);
     setSelectedCompany('');
     setSelectedUser('');
   };
@@ -551,9 +554,9 @@ export function FilterPanel({
                 checked={selectedCategories.includes(category)}
                 onChange={(e) => {
                   if (e.target.checked) {
-                    setSelectedCategories([...selectedCategories, category]);
+                    onCategoryChange([...selectedCategories, category]);
                   } else {
-                    setSelectedCategories(
+                    onCategoryChange(
                       selectedCategories.filter((c) => c !== category)
                     );
                   }
