@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileIcon, FileTextIcon, FileSpreadsheetIcon, FileWordIcon, FilePptIcon, FileArchiveIcon, FileVideoIcon, FileImageIcon, FileCodeIcon, FileAudioIcon, FileQuestionIcon, CalendarIcon, UserIcon, HardDriveIcon, SparklesIcon, CopyIcon, CheckIcon } from 'lucide-react';
+import { FileIcon, FileTextIcon, FileSpreadsheetIcon, FileBarChart2Icon, FileArchiveIcon, FileVideoIcon, FileImageIcon, FileCodeIcon, FileAudioIcon, FileQuestionIcon, CalendarIcon, UserIcon, HardDriveIcon, SparklesIcon, CopyIcon, CheckIcon } from 'lucide-react';
 // Custom SVG for DWG (Autodesk) icon
 function DwgIcon({ size = 18, className = '' }) {
   return (
@@ -13,12 +13,12 @@ function DwgIcon({ size = 18, className = '' }) {
 // File type to icon mapping
 const fileTypeIconMap: Record<string, (props: { size?: number; className?: string }) => JSX.Element> = {
   PDF: (props) => <FileTextIcon {...props} className={"text-red-500 " + (props.className || "")} />,
-  DOC: (props) => <FileWordIcon {...props} className={"text-blue-600 " + (props.className || "")} />,
-  DOCX: (props) => <FileWordIcon {...props} className={"text-blue-600 " + (props.className || "")} />,
+  DOC: (props) => <FileTextIcon {...props} className={"text-blue-600 " + (props.className || "")} />,
+  DOCX: (props) => <FileTextIcon {...props} className={"text-blue-600 " + (props.className || "")} />,
   XLS: (props) => <FileSpreadsheetIcon {...props} className={"text-green-600 " + (props.className || "")} />,
   XLSX: (props) => <FileSpreadsheetIcon {...props} className={"text-green-600 " + (props.className || "")} />,
-  PPT: (props) => <FilePptIcon {...props} className={"text-orange-500 " + (props.className || "")} />,
-  PPTX: (props) => <FilePptIcon {...props} className={"text-orange-500 " + (props.className || "")} />,
+  PPT: (props) => <FileBarChart2Icon {...props} className={"text-orange-500 " + (props.className || "")} />,
+  PPTX: (props) => <FileBarChart2Icon {...props} className={"text-orange-500 " + (props.className || "")} />,
   ZIP: (props) => <FileArchiveIcon {...props} className={"text-yellow-600 " + (props.className || "")} />,
   RAR: (props) => <FileArchiveIcon {...props} className={"text-yellow-600 " + (props.className || "")} />,
   DWG: (props) => <DwgIcon {...props} />, // Custom DWG icon
